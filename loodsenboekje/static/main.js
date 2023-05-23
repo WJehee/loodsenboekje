@@ -37,12 +37,15 @@ const app = {
                     'how': this.how,
                     'who': this.who,
                 }),
+            // Add data right away
+            }).then(response => response.json()).then(data => {
+                this.all_entries.push({
+                    'id': data.id,
+                    'how': data.how,
+                    'who': data.who,
+                    'created': data.created,
+                });
             })
-            // Add locally for instant update, TODO: also add id and timestamp?
-            this.all_entries.push({
-                'how': this.how,
-                'who': this.who,
-            });
             // Reset after submitting
             this.open = false;
             this.how = "";
