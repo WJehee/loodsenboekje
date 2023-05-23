@@ -8,11 +8,34 @@
     </head>
     <body>
         <main class='container' id="app">
-            <h1>Loodsen Boekje</h1>
+            <nav>
+                <ul>
+                    <li><strong>Loodsen Boekje</strong></li>
+                </ul>
+                <ul>
+                    <li><a href="/">Lijst</a></li>
+                    <li><a href="/map">Kaart</a></li>
+                </ul>
+            </nav>
 
+            <details :open="open" @toggle="handleToggle">
+                <summary role="button" class="outline">Voeg een biertje toe</summary>
+                <form @submit="addEntry">
+                    <label for="how">Hoe/wat</label>
+                    <input type="how" id="how" name="how" v-model="how"
+                        :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].how: 'Bier Opener'"
+                        required>
+                    <label for="who"></label>
+                        Wie (indien meer dan 1, voeg kommas toe)
+                        <input type="text" id="who" name="who" placeholder="Opa Dorus" v-model="who" required>
+                    <button type="submit" role="button">Voeg toe</button>
+                </form>
+            </details>
+
+            <!-- Search bar -->
             <form @submit.prevent>
                 <input
-                    type="text" name="search"
+                    type="search" name="search"
                     v-model="searchText"
                     @input="searching"
                     :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].how: 'Bier Opener'"
