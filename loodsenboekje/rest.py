@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_restful import Resource, reqparse
 
 from loodsenboekje.db import get_db
@@ -37,7 +38,7 @@ class EntryList(Resource):
             'id': entry["id"],
             'how': entry["how"],
             'who': entry["who"].split(','),
-            'timestamp': entry["created"].strftime("%d/%m/%Y, %H:%M:%S")
+            'created': entry["created"].strftime("%d/%m/%Y, %H:%M:%S")
         } for entry in entries]
 
     def post(self):
@@ -50,6 +51,9 @@ class EntryList(Resource):
             (args["how"],)
         )
         entry_id = cur.lastrowid
+        # If already in database, return early
+        if entry_id == 0:
+            return '', 400
         # Insert new persons if they are not already in the database
         person_ids = []
         for person in args["who"]:
@@ -68,5 +72,10 @@ class EntryList(Resource):
                 (entry_id, person_id)
             )
         db.commit()
+        res = {
+            'id': entry_id,
+            'created': datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        }
+        res.update(args)
 
-        return args, 201
+        return res, 201
