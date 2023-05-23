@@ -27,7 +27,7 @@ const app = {
 
 // Setup Fuse
 const options = {
-  keys: ['description', 'collaborators']
+  keys: ['what', 'who']
 }
 
 
