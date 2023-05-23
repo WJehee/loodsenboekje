@@ -42,11 +42,12 @@ class EntryList(Resource):
 
     def post(self):
         args = parser.parse_args()
+        print(args)
         db = get_db()
         cur = db.cursor()
         # Insert new entry
         cur.execute(
-            "INSERT INTO entry (how) VALUES (?)",
+            "INSERT OR IGNORE INTO entry (how) VALUES (?)",
             (args["how"],)
         )
         entry_id = cur.lastrowid
