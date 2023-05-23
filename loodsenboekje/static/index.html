@@ -15,7 +15,7 @@
                     type="text" name="search"
                     v-model="searchText"
                     @input="searching"
-                    :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].description : 'Bier Opener'"
+                    :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].how: 'Bier Opener'"
                 >
             </form>
 
@@ -23,17 +23,17 @@
                 <thead>
                     <tr>
                         <th scope='col'>#</th>
-                        <th scope='col'>Manier</th>
-                        <th scope='col'>Openaar(s)</th>
+                        <th scope='col'>Hoe/wat</th>
+                        <th scope='col'>Wie</th>
                         <th scope='col'>Datum</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- create one tr for every entry here -->
                     <tr v-for="entry in entries" :key="entry">
-                        <td scope='row'>{{ entry.entry_id }}</td>
-                        <td>{{ entry.description }}</td>
-                        <td>{{ entry.collaborators.join(', ') }}</td>
+                        <td scope='row'>{{ entry.id}}</td>
+                        <td>{{ entry.how}}</td>
+                        <td>{{ entry.who.join(', ') }}</td>
                         <td>{{ entry.timestamp }}</td>
                     </tr>
                 </tbody>
