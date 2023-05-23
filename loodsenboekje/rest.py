@@ -1,4 +1,3 @@
-from datetime import datetime
 from flask_restful import Resource, reqparse
 
 from loodsenboekje.db import get_db
@@ -27,7 +26,8 @@ class EntryList(Resource):
         db = get_db()
         entries = db.execute(
             """
-            SELECT entry.id, entry.how, GROUP_CONCAT(user.name) as who, entry.created FROM user
+            SELECT entry.id, entry.how, GROUP_CONCAT(user.name) as who,
+            entry.created FROM user
             JOIN entry_user ON user.id = entry_user.user_id
             JOIN entry ON entry.id = entry_user.entry_id
             GROUP BY entry.id
@@ -42,7 +42,6 @@ class EntryList(Resource):
 
     def post(self):
         args = parser.parse_args()
-        print(args)
         db = get_db()
         cur = db.cursor()
         # Insert new entry
