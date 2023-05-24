@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask_restful import Resource, reqparse
+from flask_login import login_required
 
 from loodsenboekje.db import get_db
 
@@ -11,14 +12,27 @@ parser.add_argument('who', required=True, action='append')
 
 class Entry(Resource):
     def get(self, entry_id):
+        db = get_db()
+        entry = db.execute(
+            "SELECT * FROM entry WHERE id = ?",
+            (entry_id,)
+        ).fetchone()
         return {
-            'entry_id': entry_id
+            'id': entry['id'],
+            'how': entry['how'],
+            'created': entry['created'].strftime("%d/%m/%Y"),
         }
 
     def put(self, entry_id):
         return ''
 
     def delete(self, entry_id):
+        db = get_db()
+        db.execute(
+            "DELETE FROM entry WHERE id = ?",
+            (entry_id,)
+        )
+        db.commit()
         return '', 204
 
 
@@ -38,9 +52,10 @@ class EntryList(Resource):
             'id': entry["id"],
             'how': entry["how"],
             'who': entry["who"].split(','),
-            'created': entry["created"].strftime("%d/%m/%Y, %H:%M:%S")
+            'created': entry["created"].strftime("%d/%m/%Y")
         } for entry in entries]
 
+    @login_required
     def post(self):
         args = parser.parse_args()
         db = get_db()
@@ -74,7 +89,7 @@ class EntryList(Resource):
         db.commit()
         res = {
             'id': entry_id,
-            'created': datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            'created': datetime.now().strftime("%d/%m/%Y")
         }
         res.update(args)
 
