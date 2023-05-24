@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class='container' id="app">
+    <nav>
+        <ul>
+            <li><strong>Loodsen Boekje</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/">Lijst</a></li>
+            {% if current_user.is_authenticated %}
+            <li><a href="/logout">Logout</a></li>
+            {% else %}
+            <li><a href="/login">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    {% if current_user.is_authenticated %}
+    <details :open="open" @toggle="handleToggle">
+        <summary role="button" class="outline">Voeg een biertje toe</summary>
+        <form @submit="addEntry">
+            <label for="how">Hoe/wat</label>
+            <input type="how" id="how" name="how" v-model="how"
+                                                  :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].how: 'Bier Opener'"
+                                                  required>
+            <label for="who"></label>
+            Wie (indien meer dan 1, voeg kommas toe)
+            <input type="text" id="who" name="who" placeholder="Opa Dorus" v-model="who" required>
+            <button type="submit" role="button">Voeg toe</button>
+        </form>
+    </details>
+    {% endif %}
+
+    <!-- Search bar -->
+    <form @submit.prevent>
+        <input
+                type="search" name="search"
+                              v-model="searchText"
+                              @input="searching"
+                              :placeholder="entries.length > 0? entries[Math.floor(Math.random()*entries.length)].how: 'Bier Opener'"
+                              >
+    </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th scope='col'>#</th>
+                    <th scope='col'>Hoe/wat</th>
+                    <th scope='col'>Wie</th>
+                    <th scope='col'>Datum</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="entry in entries" :key="entry">
+                    <td scope='row'>{{ entry.id}}</td>
+                    <td>{{ entry.how}}</td>
+                    <td>{{ entry.who.join(', ') }}</td>
+                    <td>{{ entry.created}}</td>
+                </tr>
+            </tbody>
+        </table>
+</main>
+{% endblock %}

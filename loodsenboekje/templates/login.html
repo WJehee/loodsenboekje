@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<main class='container'>
+    <form action='login' method='POST'>
+        <div class="grid">
+            <label for="username">
+                Gebruikersnaam
+                <input type="text" id="username" name="username" placeholder="Gebruikersnaam" required>
+            </label>
+            <label for="password">
+                Wachtwoord 
+                <input type="password" id="password" name="password" placeholder="Wachtwoord" required>
+            </label>
+        </div>
+        <button type="submit">Inloggen</button>
+    </form>
+</main>
+
+{% endblock %}

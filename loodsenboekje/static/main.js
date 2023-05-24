@@ -33,6 +33,7 @@ const app = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     'how': this.how,
                     'who': this.who,
