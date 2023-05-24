@@ -24,9 +24,9 @@ def create_app():
     def index():
         return app.send_static_file('index.html')
 
-    @app.route('/map')
-    def map():
-        return "cool folium map here"
+    @app.route('/login')
+    def login():
+        return "login"
 
     api.add_resource(EntryList, '/entry/')
     api.add_resource(Entry, '/entry/<entry_id>')
