@@ -6,16 +6,22 @@
         <ul>
             <li><strong>Loodsen Boekje</strong></li>
         </ul>
+        {% if current_user.is_authenticated %}
+        <ul>
+            <li>Ingelogd als (% current_user.id %)</li>
+        </ul>
+        {% endif %}
         <ul>
             <li><a href="/">Lijst</a></li>
             {% if current_user.is_authenticated %}
-            <li><a href="/logout">Logout</a></li>
+            <li><a href="/logout">Log uit</a></li>
             {% else %}
-            <li><a href="/login">Login</a></li>
+            <li><a href="/login">Log in</a></li>
             {% endif %}
         </ul>
     </nav>
 
+    <!-- Form to add a new entry, only renders if you are authenticated -->
     {% if current_user.is_authenticated %}
     <details :open="open" @toggle="handleToggle">
         <summary role="button" class="outline">Voeg een biertje toe</summary>
