@@ -3,6 +3,7 @@ from flask_restful import Resource, reqparse
 from flask_login import login_required
 
 from loodsenboekje.db import get_db
+from loodsenboekje.routes import check_authenticated
 
 
 parser = reqparse.RequestParser()
@@ -55,7 +56,7 @@ class EntryList(Resource):
             'created': entry["created"].strftime("%d/%m/%Y")
         } for entry in entries]
 
-    @login_required
+    @check_authenticated
     def post(self):
         args = parser.parse_args()
         db = get_db()
