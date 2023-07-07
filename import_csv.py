@@ -5,6 +5,7 @@ import requests
 mapping = {
     "Pietertje": "Wouter"
 }
+url = "https://loodsenboekje.com"
 
 if len(sys.argv) <= 2:
     print("Not enough arguments, need username + password")
@@ -12,6 +13,9 @@ if len(sys.argv) <= 2:
 
 session = requests.Session()
 session.auth = (sys.argv[1], sys.argv[2])
+
+if len(sys.argv) == 4:
+    url = sys.argv[3]
 
 with open('loodsenboekje.csv') as file:
     reader = csv.DictReader(file)
@@ -22,7 +26,7 @@ with open('loodsenboekje.csv') as file:
             for person in row['wie'].strip().split('/')]
         try:
             r = session.post(
-                'http://localhost:5000/entry/',
+                f'{url}/entry/',
                 json={
                     "how": how,
                     "who": who
