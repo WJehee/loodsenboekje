@@ -1,6 +1,6 @@
 from datetime import datetime
+
 from flask_restful import Resource, reqparse
-from flask_login import login_required
 
 from loodsenboekje.db import get_db
 from loodsenboekje.routes import check_authenticated
@@ -9,6 +9,7 @@ from loodsenboekje.routes import check_authenticated
 parser = reqparse.RequestParser()
 parser.add_argument('how', type=str, required=True)
 parser.add_argument('who', required=True, action='append')
+parser.add_argument("created", type=str, required=False)
 
 
 class Entry(Resource):
@@ -24,9 +25,24 @@ class Entry(Resource):
             'created': entry['created'].strftime("%d/%m/%Y"),
         }
 
+    @check_authenticated
     def put(self, entry_id):
-        return ''
+        args = parser.parse_args()
+        created = datetime.strptime(args["created"] + " 00:00:00", "%Y-%m-%d %H:%M:%S")
+        db = get_db()
+        cur = db.cursor()
+        cur.execute(
+            "UPDATE entry SET how = ?, created = ? WHERE id = ?",
+            (args["how"], created, entry_id)
+        )
+        db.commit()
+        return {
+            'id': entry_id,
+            'how': args["how"],
+            'created': created.strftime("%d/%m/%Y"),
+        }
 
+    @check_authenticated
     def delete(self, entry_id):
         db = get_db()
         db.execute(
