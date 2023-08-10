@@ -10,7 +10,10 @@ async fn main() -> Result<()> {
        "password": "admin"
     })).await?.print().await?;
     hc.do_get("/logout").await?.print().await?;
-    hc.do_get("/").await?.print().await?;
+    hc.do_post("/api/users", json!({
+        
+    })).await?.print().await?;
+    hc.do_get("/api/users").await?.print().await?;
 
     Ok(())
 }

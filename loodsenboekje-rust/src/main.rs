@@ -1,8 +1,10 @@
+use crate::error::{Result, Error};
 use std::net::SocketAddr;
 
 use axum::{Router, routing::get_service};
 use tower_cookies::CookieManagerLayer;
 use tower_http::services::ServeDir;
+use sqlx::SqlitePool;
 
 mod model;
 mod web;
@@ -10,9 +12,10 @@ mod error;
 
 #[tokio::main]
 async fn main() {
+    let db = SqlitePool::connect("sqlite.db").await.unwrap();
     let router = Router::new()
         .merge(web::auth::routes())
-        .nest("/api", web::api::routes())
+        .nest("/api", web::api::routes(db.clone()))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static())
     ;
