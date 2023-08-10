@@ -1,15 +1,17 @@
 use serde::Serialize;
+use sqlx::FromRow;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct Entry {
-    id: usize,
-    how: String,
-    when: String,
-    by: User,
+    pub id: u64,
+    pub how: String,
+    pub when: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct User {
-    name: String,
+    pub id: i64,
+    pub name: String,
+    pub password: String,
 }
 
