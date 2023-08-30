@@ -3,9 +3,9 @@ use sqlx::FromRow;
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub struct Entry {
-    pub id: u64,
+    pub id: i64,
     pub how: String,
-    pub when: String,
+    pub created: chrono::NaiveDateTime,
 }
 
 #[serde_with::skip_serializing_none]
