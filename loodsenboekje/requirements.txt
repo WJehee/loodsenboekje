@@ -1,7 +1,0 @@
-flask
-flask_restful
-flask_login
-flask_httpauth
-click
-python-dotenv
-
