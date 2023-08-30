@@ -1,10 +1,14 @@
 # Loodsenboekje.com
 
-Website to have a digital version of the "Loodsenboekje".  
-Has fuzzy search, implemented with Vue and Flask.
-
-Serve with waitress:
+## Setup database
 ```
-waitress-serve --call loodsenboekje:create_app
+export DATABASE_URL="sqlite://sqlite.db"
+cargo sqlx db create
+cargo sqlx migrate run
+```
+
+## Adding a migration
+```
+cargo sqlx migrate add <name>
 ```
 
