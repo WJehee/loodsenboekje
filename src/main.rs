@@ -12,9 +12,10 @@ mod error;
 #[tokio::main]
 async fn main() {
     let db = SqlitePool::connect("sqlite.db").await.unwrap();
+    let model = model::ModelManager::new(db.clone());
     let router = Router::new()
         .merge(web::auth::routes())
-        .nest("/api", web::api::routes(db.clone()))
+        .nest("/api", web::api::routes(model))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static())
     ;

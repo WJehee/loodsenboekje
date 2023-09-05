@@ -1,10 +1,9 @@
-use crate::{error::{Result, Error}, model::{User, Entry}};
+use crate::{error::{Result, Error}, model:: ModelManager};
 
 use axum::{Router, extract::{State, Path}, Json, routing::get};
 use serde_json::Value;
-use sqlx::SqlitePool;
 
-pub fn routes(db: SqlitePool) -> Router {
+pub fn routes(model: ModelManager) -> Router {
     Router::new()
         .route("/users", get(list_users)
             .post(create_user))
@@ -16,97 +15,55 @@ pub fn routes(db: SqlitePool) -> Router {
         .route("/entries/:id", get(get_entry)
             .post(update_entry)
             .delete(delete_entry))
-        .with_state(db)
+        .with_state(model)
 }
 
-async fn list_users(State(db): State<SqlitePool>) -> Result<Json<Value>> {
-    let result = sqlx::query_as!(User, "SELECT * FROM users")
-        .fetch_all(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
+async fn list_users(State(db): State<ModelManager>) -> Result<Json<Value>> {
     Ok(Json(
         serde_json::to_value(result).unwrap()
     ))
 }
 
-async fn create_user(State(db): State<SqlitePool>, Json(user): Json<User>) -> Result<Json<Value>> {
+async fn create_user(State(db): State<ModelManager>, Json(user): Json<User>) -> Result<Json<Value>> {
     // TODO: if we end up using passwords instead of a simple .env variable, hash it before inserting
-    let id: i64 = sqlx::query!("INSERT INTO users (name, password) VALUES (?, ?)", user.name, user.password) 
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?
-        .last_insert_rowid();
     Ok(Json(serde_json::to_value(id).unwrap()))
 }
 
-async fn get_user(State(db): State<SqlitePool>, Path(id): Path<i64>) -> Result<Json<Value>> {
-    let result = sqlx::query_as!(User, "SELECT * FROM users WHERE id = ?", id)
-        .fetch_one(&db)
-        .await
-        .map_err(|_| Error::NotFound)?;
+async fn get_user(State(db): State<ModelManager>, Path(id): Path<i64>) -> Result<Json<Value>> {
     Ok(Json(
         serde_json::to_value(result).unwrap()
     ))
 }
 
-async fn delete_user(State(db): State<SqlitePool>, Path(id): Path<i64>) -> Result<Json<Value>> {
-    sqlx::query!("DELETE FROM users WHERE id = ?", id)
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
+async fn delete_user(State(db): State<ModelManager>, Path(id): Path<i64>) -> Result<Json<Value>> {
     Ok(Json(serde_json::to_value(id).unwrap()))
 }
 
-async fn update_user(State(db): State<SqlitePool>, Path(id): Path<i64>, Json(user): Json<User>) -> Result<Json<Value>> {
-    sqlx::query!("UPDATE users SET name = ?, password = ? WHERE id = ?", user.name, user.password, id)
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
+async fn update_user(State(db): State<ModelManager>, Path(id): Path<i64>, Json(user): Json<User>) -> Result<Json<Value>> {
     Ok(Json(serde_json::to_value(id).unwrap()))
 }
 
-async fn list_entries(State(db): State<SqlitePool>) -> Result<Json<Value>> {
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
-        .fetch_all(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
+async fn list_entries(State(db): State<ModelManager>) -> Result<Json<Value>> {
     Ok(Json(
         serde_json::to_value(result).unwrap()
     ))
 }
 
-async fn create_entry(State(db): State<SqlitePool>, Json(entry): Json<Entry>) -> Result<Json<Value>> {
-    let id = sqlx::query!("INSERT INTO entry (how, created) VALUES (?, ?)", entry.how, entry.created)
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?
-        .last_insert_rowid();
+async fn create_entry(State(db): State<ModelManager>, Json(entry): Json<Entry>) -> Result<Json<Value>> {
     Ok(Json(serde_json::to_value(id).unwrap()))
 }
 
-async fn get_entry(State(db): State<SqlitePool>, Path(id): Path<i64>) -> Result<Json<Value>> {
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entry WHERE id = ?", id)
-        .fetch_one(&db)
-        .await
-        .map_err(|_| Error::NotFound)?;
+async fn get_entry(State(db): State<ModelManager>, Path(id): Path<i64>) -> Result<Json<Value>> {
     Ok(Json(
         serde_json::to_value(result).unwrap()
     ))
 }
 
-async fn delete_entry(State(db): State<SqlitePool>, Path(id): Path<i64>) -> Result<Json<Value>> {
-    sqlx::query!("DELETE FROM entry WHERE id = ?", id)
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
+async fn delete_entry(State(db): State<ModelManager>, Path(id): Path<i64>) -> Result<Json<Value>> {
     Ok(Json(serde_json::to_value(id).unwrap()))
 }
 
-async fn update_entry(State(db): State<SqlitePool>, Path(id): Path<i64>, Json(entry): Json<Entry>) -> Result<Json<Value>> {
-    sqlx::query!("UPDATE entry SET how = ?, created = ? WHERE id = ?", entry.how, entry.created, id)
-        .execute(&db)
-        .await
-        .map_err(|_| Error::DataBaseError)?;
-    Ok(Json(serde_json::to_value(id).unwrap()))
+async fn update_entry(State(model): State<ModelManager>, Path(id): Path<i64>, Json(entry): Json<Entry>) -> Result<Json<Value>> {
+    await model.update_entry(entry, id)
 }
 
