@@ -15,7 +15,7 @@ async fn main() {
     let model = model::ModelManager::new(db.clone());
     let router = Router::new()
         .merge(web::auth::routes())
-        .nest("/api", web::api::routes(model))
+        .nest("/api", web::api::routes(model.clone()))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static())
     ;

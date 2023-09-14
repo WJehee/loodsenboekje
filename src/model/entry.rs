@@ -11,6 +11,13 @@ pub struct Entry {
     pub created: chrono::NaiveDateTime,
 }
 
+impl Entry {
+    pub fn created(&self) -> chrono::NaiveDateTime {
+        self.created
+    }
+}
+
+#[derive(Debug, Deserialize)]
 pub struct EntryCreate {
     pub how: String,
 }
@@ -18,7 +25,7 @@ pub struct EntryCreate {
 pub struct EntryController;
 
 impl EntryController {
-    pub async fn create_entry(mm: &ModelManager, entry: EntryCreate) -> Result<i64> {
+    pub async fn create(mm: &ModelManager, entry: EntryCreate) -> Result<i64> {
         let db = mm.db();
         let id = sqlx::query!("INSERT INTO entry (how) VALUES (?)", entry.how)
             .execute(db)
@@ -28,7 +35,7 @@ impl EntryController {
         Ok(id)
     }
 
-    pub async fn get_entry(mm: &ModelManager, id: i64) -> Result<Entry> {
+    pub async fn get(mm: &ModelManager, id: i64) -> Result<Entry> {
         let db = mm.db();
         let result = sqlx::query_as!(Entry, "SELECT * FROM entry WHERE id = ?", id)
             .fetch_one(db)
@@ -37,7 +44,7 @@ impl EntryController {
         Ok(result)
     }
 
-    pub async fn get_entries(mm: &ModelManager) -> Result<Vec<Entry>> {
+    pub async fn list(mm: &ModelManager) -> Result<Vec<Entry>> {
         let db = mm.db();
         let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
             .fetch_all(db)
@@ -46,7 +53,7 @@ impl EntryController {
         Ok(result)
     }
 
-    pub async fn delete_entry(mm: &ModelManager, id: i64) -> Result<()> {
+    pub async fn delete(mm: &ModelManager, id: i64) -> Result<()> {
         let db = mm.db();
         sqlx::query!("DELETE FROM entry WHERE id = ?", id)
             .execute(db)
@@ -55,7 +62,7 @@ impl EntryController {
         Ok(())
     }
 
-    pub async fn update_entry(mm: &ModelManager, entry: Entry, id: i64) -> Result<Entry> {
+    pub async fn update(mm: &ModelManager, id: i64, entry: Entry) -> Result<Entry> {
         let db = mm.db();
         sqlx::query!("UPDATE entry SET how = ?, created = ? WHERE id = ?", entry.how, entry.created, id)
             .execute(db)
