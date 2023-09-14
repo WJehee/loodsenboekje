@@ -1,8 +1,8 @@
 use sqlx::SqlitePool;
 
 mod error;
-mod user;
-mod entry;
+pub mod user;
+pub mod entry;
 
 pub use self::error::{Result, Error};
 
