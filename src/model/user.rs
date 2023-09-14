@@ -55,8 +55,8 @@ impl UserController {
 
     pub async fn update_user(mm: &ModelManager, id: i64, user: UserCreate) -> Result<User> {
         let db = mm.db();
-        sqlx::query!("UPDATE users SET name = ?, WHERE id = ?", user.name, id)
-            .execute(&db)
+        sqlx::query!("UPDATE users SET name = ? WHERE id = ?", user.name, id)
+            .execute(db)
             .await
             .map_err(|_| Error::DataBaseError)?;
         Ok(User {
