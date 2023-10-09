@@ -11,12 +11,6 @@ pub struct Entry {
     pub created: chrono::NaiveDateTime,
 }
 
-impl Entry {
-    pub fn created(&self) -> chrono::NaiveDateTime {
-        self.created
-    }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct EntryCreate {
     pub how: String,

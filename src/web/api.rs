@@ -1,4 +1,4 @@
-use crate::{error::{Result}, model:: ModelManager};
+use crate::{error::Result, model:: ModelManager};
 use crate::model::user::{UserCreate, UserController};
 use crate::model::entry::{Entry, EntryCreate, EntryController};
 
