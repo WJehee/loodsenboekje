@@ -3,15 +3,64 @@ name = "loodsenboekje"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-axum = "0.6.19"
+axum = { version = "0.6.4", optional = true }
 chrono = { version = "0.4.30", features = ["serde"] }
 serde = { version = "1.0.180", features = ["derive"] }
 serde_json = "1.0.104"
 serde_with = { version = "3.2.0", features = ["json"] }
-sqlx = { version = "0.7.1", features = ["sqlite", "runtime-tokio", "chrono"] }
-tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
+cfg-if = "1"
+leptos = { version = "0.5", features = ["nightly"] }
+leptos_axum = { version = "0.5", optional = true }
+leptos_meta = { version = "0.5", features = ["nightly"] }
+leptos_router = { version = "0.5", features = ["nightly"] }
+sqlx = { version = "0.7.1", features = ["sqlite", "runtime-tokio", "chrono"], optional = true }
+tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"], optional = true }
+tower = { version = "0.4.13", optional = true }
+tower-http = { version = "0.4.4", features = ["fs"], optional = true }
 tower-cookies = "0.9.0"
-tower-http = { version = "0.4.3", features = ["fs"] }
+wasm-bindgen = "=0.2.87"
+
+[features]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+ssr = [
+    "dep:axum",
+    "dep:tokio",
+    "dep:tower",
+    "dep:leptos_axum",
+    "dep:tower-http",
+    "dep:sqlx",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+]
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[package.metadata.leptos]
+output-name = "leptos-loodsenboekje"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+assets-dir = "public"
+site-addr = "127.0.0.1:3000"
+reload-port = 3001
+
+browserquery = "defaults"
+watch = false
+env = "DEV"
+
+bin-features = ["ssr"]
+bin-default-features = false
+
+lib-features = ["hydrate"]
+lib-default-features = false
+lib-profile-release = "wasm-release"
+
