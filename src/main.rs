@@ -21,7 +21,6 @@ async fn main() {
     let routes = generate_route_list(App);
 
     let db = SqlitePool::connect("sqlite.db").await.unwrap();
-    // let model = model::ModelManager::new(db.clone());
     let router = Router::new()
         // .merge(web::auth::routes())
         // .nest("/api", web::api::routes(model.clone()))
