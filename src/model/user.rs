@@ -2,6 +2,8 @@ use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 use leptos::*;
 
+use super::db;
+
 #[derive(Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "ssr", derive(FromRow))]
 pub struct User {
@@ -11,7 +13,7 @@ pub struct User {
 
 #[server]
 pub async fn create_user(user: UserCreate) -> Result<i64> {
-    let db = mm.db();
+    let db = db();
     let id: i64 = sqlx::query!("INSERT INTO users (name) VALUES (?)", user.name) 
         .execute(db)
         .await
@@ -22,7 +24,7 @@ pub async fn create_user(user: UserCreate) -> Result<i64> {
 
 #[server]
 pub async fn get_user(id: i64) -> Result<User> {
-    let db = mm.db();
+    let db = db();
     let result = sqlx::query_as!(User, "SELECT * FROM users WHERE id = ?", id)
         .fetch_one(db)
         .await
@@ -32,7 +34,7 @@ pub async fn get_user(id: i64) -> Result<User> {
 
 #[server]
 pub async fn delete(id: i64) -> Result<()> {
-    let db = mm.db();
+    let db = db();
     sqlx::query!("DELETE FROM users WHERE id = ?", id)
         .execute(db)
         .await

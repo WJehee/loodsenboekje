@@ -1,8 +1,3 @@
-
-// mod model;
-// mod web;
-// mod error;
-
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
