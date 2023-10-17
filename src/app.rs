@@ -2,6 +2,8 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
+use crate::model::entry::get_entries;
+
 #[component]
 pub fn App() -> impl IntoView {
     view! {
@@ -97,6 +99,7 @@ fn SearchBar() -> impl IntoView {
 #[component]
 fn AllEntries() -> impl IntoView {
     // TODO: get entries from database
+    let fetched_entries = get_entries();
     let entries = create_rw_signal(vec![0, 1, 2]);
     view! {
         <kbd>x resultaten</kbd>

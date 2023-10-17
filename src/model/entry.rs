@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 use leptos::*;
 
-use crate::model::{Result, Error};
+use super::db;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "ssr", derive(FromRow))]
@@ -14,7 +14,7 @@ pub struct Entry {
 
 #[server]
 pub async fn create_entry(id: i64, how: String) -> Result<i64> {
-    let db = mm.db();
+    let db = db();
     let id = sqlx::query!("INSERT INTO entry (how) VALUES (?)", entry.how)
         .execute(db)
         .await
@@ -25,7 +25,7 @@ pub async fn create_entry(id: i64, how: String) -> Result<i64> {
 
 #[server]
 pub async fn get_entry(id: i64) -> Result<Entry> {
-    let db = mm.db();
+    let db = db();
     let result = sqlx::query_as!(Entry, "SELECT * FROM entry WHERE id = ?", id)
         .fetch_one(db)
         .await
@@ -35,7 +35,7 @@ pub async fn get_entry(id: i64) -> Result<Entry> {
 
 #[server]
 pub async fn get_entries() -> Result<Vec<Entry>> {
-    let db = mm.db();
+    let db = db();
     let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
         .fetch_all(db)
         .await
@@ -45,7 +45,7 @@ pub async fn get_entries() -> Result<Vec<Entry>> {
 
 #[server]
 pub async fn delete_entry(id: i64) -> Result<()> {
-    let db = mm.db();
+    let db = db();
     sqlx::query!("DELETE FROM entry WHERE id = ?", id)
         .execute(db)
         .await
@@ -55,7 +55,7 @@ pub async fn delete_entry(id: i64) -> Result<()> {
 
 #[server]
 pub async fn update_entry(id: i64, how: String) -> Result<Entry> {
-    let db = mm.db();
+    let db = db();
     sqlx::query!("UPDATE entry SET how = ?, created = ? WHERE id = ?", entry.how, entry.created, id)
         .execute(db)
         .await
