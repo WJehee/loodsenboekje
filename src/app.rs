@@ -81,6 +81,7 @@ fn AddEntryForm() -> impl IntoView {
 
 #[component]
 fn SearchBar() -> impl IntoView {
+    // TODO: filter (fuzzy) the list of entries based on the search string
     let search_query = create_rw_signal("".to_string());
     view! {
         <form>
@@ -98,7 +99,7 @@ fn SearchBar() -> impl IntoView {
 
 #[component]
 fn AllEntries() -> impl IntoView {
-    // TODO: get entries from database
+    // TODO: fetch the entries, if the list is empty, render an error asking for login
     let fetched_entries = get_entries();
     let entries = create_rw_signal(vec![0, 1, 2]);
     view! {
