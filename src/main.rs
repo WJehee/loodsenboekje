@@ -1,13 +1,15 @@
+pub mod app;
+pub mod model;
+
+use loodsenboekje::app::*;
+
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
     use axum::Router;
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
-
     use tower_cookies::CookieManagerLayer;
-    use sqlx::SqlitePool;
-    use loodsenboekje::app::*;
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
@@ -15,7 +17,6 @@ async fn main() {
     let site_root = leptos_options.site_root.clone();
     let routes = generate_route_list(App);
 
-    let db = SqlitePool::connect("sqlite.db").await.unwrap();
     let router = Router::new()
         // .merge(web::auth::routes())
         // .nest("/api", web::api::routes(model.clone()))

@@ -1,8 +1,7 @@
 use leptos::*;
 use leptos_meta::*;
-use leptos_router::*;
 
-use crate::model::entry::get_entries;
+use crate::model::entry::{Entry, get_entries};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -11,15 +10,15 @@ pub fn App() -> impl IntoView {
         <Title text="Loodsen Boekje"/>
         <div class="container">
             <NavBar/>
-
-            <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
-                <main>
-                    <Routes>=
-                        <Route path="" view=MainPage/>
-                        <Route path="/login" view=LoginPage/>
-                    </Routes>
-                </main>
-            </Router>
+            <MainPage/>
+            // <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
+            //     <main>
+            //         <Routes>=
+            //             <Route path="" view=MainPage/>
+            //             <Route path="/login" view=LoginPage/>
+            //         </Routes>
+            //     </main>
+            // </Router>
         </div>
         <footer class="container">
             <hr/>
@@ -99,9 +98,9 @@ fn SearchBar() -> impl IntoView {
 
 #[component]
 fn AllEntries() -> impl IntoView {
-    // TODO: fetch the entries, if the list is empty, render an error asking for login
-    let fetched_entries = get_entries();
-    let entries = create_rw_signal(vec![0, 1, 2]);
+    let entries: RwSignal<Vec<Entry>> = create_rw_signal(vec![]);
+    let entry_resource = create_resource(entries, |_| get_entries());
+
     view! {
         <kbd>x resultaten</kbd>
         <table>
@@ -114,24 +113,30 @@ fn AllEntries() -> impl IntoView {
                 </tr>
             </thead>
             <tbody>
-            <For
-                each=move || entries.get()
-                key=|entry| *entry
-                let:entry
-            >
-                <EntryRow/>
-            </For>
+            <Transition fallback=move || view! {Loading...}>
+                {move || entry_resource.get().map(|entries| match entries {
+                    Err(_e) => view! {Error loading...}.into_view(),
+                    Ok(entries) => view! {
+                        <For
+                            each=move || entries.clone()
+                            key=|entry| entry.id
+                            let:entry
+                        >
+                            <EntryRow entry/>
+                        </For>
+                    }
+                })}
+            </Transition>
             </tbody>
-        </table>
+            </table>
     }
 }
 
 #[component]
-fn EntryRow() -> impl IntoView {
+fn EntryRow(entry: Entry) -> impl IntoView {
     view! {
         <tr>
-            <td>Hello world</td>
-            // <td scope='row'>{{ entry.id}}</td>
+            <td scope="row">{ entry.id}</td>
             // <td>
             //     <template v-if="!entry.editing">{{ entry.how}}</template>
             //     <input v-else type="text" v-model="entry.how">

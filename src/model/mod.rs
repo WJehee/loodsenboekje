@@ -1,9 +1,12 @@
-use sqlx::SqlitePool;
+use cfg_if::cfg_if;
 
 pub mod user;
 pub mod entry;
 
-async fn db() -> SqlitePool {
-    SqlitePool::connect("sqlite.db").await.unwrap()
-}
+cfg_if! { if #[cfg(feature = "ssr")] {
+    use sqlx::SqlitePool;
+    async fn db() -> SqlitePool {
+        SqlitePool::connect("sqlite.db").await.unwrap()
+    }
+}}
 
