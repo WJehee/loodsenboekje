@@ -44,17 +44,15 @@ fn NavBar() -> impl IntoView {
                 <li><strong>Loodsen Boekje</strong></li>
             </ul>
             <ul>
-            // {% if current_user.is_authenticated %}
+                // TODO: if user is authenticated, show username
                 <li>Ingelogd als PLACEHOLDER</li>
             </ul>
-            // {% endif %}
             <ul>
                 <li><a href="/">Lijst</a></li>
-                // {% if current_user.is_authenticated %}
+                // TODO: if user is authenticated show this
                 <li><a href="/logout">Log uit</a></li>
-                // {% else %}
+                // Else show this
                 <li><a href="/login">Log in</a></li>
-                // {% endif %}
             </ul>
         </nav>
     }
@@ -63,7 +61,7 @@ fn NavBar() -> impl IntoView {
 #[component]
 fn AddEntryForm() -> impl IntoView {
     view! {
-        // {% if current_user.is_authenticated %}
+        // TODO: show this form if user is authenticated, maybe one level higher?
         <details>
             <summary role="button" class="outline">Voeg een biertje toe</summary>
             <form>
@@ -75,7 +73,6 @@ fn AddEntryForm() -> impl IntoView {
                 <button type="submit" role="button">Voeg toe</button>
             </form>
         </details>
-        // {% endif %}
     }
 }
 
@@ -155,15 +152,11 @@ fn EntryRow(entry: Entry) -> impl IntoView {
             >
                 // When editing
                 // TODO: make sure each input field matches with the api
-                // how
                 <td><input type="text"/></td>
-                // who
                 <td><input type="text"/></td>
-                // created
                 <td><input type="text"/></td>
             </Show>
-            // <!-- only allow deletion and editing if authenticated -->
-            // {% if current_user.is_authenticated %}
+            // TODO: only allow deletion and editing if authenticated
             <td>
                 <a
                     href="#"
