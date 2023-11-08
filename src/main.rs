@@ -1,15 +1,18 @@
 pub mod app;
 pub mod model;
-
-use loodsenboekje::app::*;
+pub mod auth;
 
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use axum::Router;
+    use axum::{
+        Router,
+        routing::post,
+    };
     use leptos::*;
-    use leptos_axum::{generate_route_list, LeptosRoutes};
-    use tower_cookies::CookieManagerLayer;
+    use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns};
+
+    use loodsenboekje::app::*;
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
@@ -18,9 +21,7 @@ async fn main() {
     let routes = generate_route_list(App);
 
     let router = Router::new()
-        // .merge(web::auth::routes())
-        // .nest("/api", web::api::routes(model.clone()))
-        .layer(CookieManagerLayer::new())
+        .route("/api/*fn_name", post(handle_server_fns))
         .leptos_routes(&leptos_options, routes, App)
         .with_state(leptos_options)
         .fallback_service(routes_static(&site_root))
@@ -35,4 +36,5 @@ fn routes_static(root: &str) -> axum::Router {
     use axum::routing::get_service;
     axum::Router::new().nest_service("/", get_service(ServeDir::new(root)))
 }
+
 
