@@ -1,7 +1,11 @@
 use leptos::*;
 use leptos_meta::*;
+use leptos_router::*;
 
-use crate::model::entry::{Entry, get_entries};
+use crate::{
+    model::entry::{Entry, get_entries, AddEntry, DeleteEntry},
+    auth::Login
+};
 use chrono::Datelike;
 
 #[component]
@@ -11,15 +15,14 @@ pub fn App() -> impl IntoView {
         <Title text="Loodsen Boekje"/>
         <div class="container">
             <NavBar/>
-            <MainPage/>
-            // <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
-            //     <main>
-            //         <Routes>=
-            //             <Route path="" view=MainPage/>
-            //             <Route path="/login" view=LoginPage/>
-            //         </Routes>
-            //     </main>
-            // </Router>
+            <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
+                <main>
+                    <Routes>
+                        <Route path="" view=MainPage/>
+                        <Route path="/login" view=LoginPage/>
+                    </Routes>
+                </main>
+            </Router>
         </div>
         <footer class="container">
             <hr/>
@@ -30,9 +33,10 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn MainPage() -> impl IntoView {
+    let add_entry = create_server_action::<AddEntry>();
     view! {
-        <AddEntryForm/>
-        <SearchBar/>
+        <AddEntryForm add_entry/>
+        <SearchBar add_entry/>
     }
 }
 
@@ -59,27 +63,35 @@ fn NavBar() -> impl IntoView {
 }
 
 #[component]
-fn AddEntryForm() -> impl IntoView {
+fn AddEntryForm(
+    add_entry: Action<AddEntry, Result<i64, ServerFnError>>
+) -> impl IntoView {
+    // TODO: show this form if user is authenticated, maybe one level higher?
     view! {
-        // TODO: show this form if user is authenticated, maybe one level higher?
         <details>
             <summary role="button" class="outline">Voeg een biertje toe</summary>
-            <form>
-                <label for="how">Hoe/wat</label>
-                <input type="text" name="how"></input>
-                <label for="who"></label>
-                Wie (indien meer dan 1, voeg kommas toe)
-                <input type="text" name="who" placeholder="Opa Dorus" required></input>
+            <ActionForm action=add_entry>
+                <label for="how">
+                    Hoe/wat
+                    <input type="text" name="how"/>
+                </label>
+                // <label for="who">
+                //     Wie (indien meer dan 1, voeg kommas toe)
+                //     <input type="text" name="who" placeholder="Opa Dorus" required/>
+                // </label>
                 <button type="submit" role="button">Voeg toe</button>
-            </form>
+            </ActionForm>
         </details>
     }
 }
 
 #[component]
-fn SearchBar() -> impl IntoView {
+fn SearchBar(
+    add_entry: Action<AddEntry, Result<i64, ServerFnError>>
+) -> impl IntoView {
     // TODO: filter (fuzzy) the list of entries based on the search string
     let search_query = create_rw_signal("".to_string());
+    let delete_entry = create_server_action::<DeleteEntry>();
     view! {
         <form>
             <input
@@ -90,14 +102,22 @@ fn SearchBar() -> impl IntoView {
                 }
             ></input>
         </form>
-        <AllEntries/>
+        <AllEntries add_entry delete_entry/>
     }
 }
 
 #[component]
-fn AllEntries() -> impl IntoView {
-    let entries: RwSignal<Vec<Entry>> = create_rw_signal(vec![]);
-    let entry_resource = create_resource(entries, |_| get_entries());
+fn AllEntries(
+    add_entry: Action<AddEntry, Result<i64, ServerFnError>>,
+    delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
+) -> impl IntoView {
+    let entry_resource = create_resource(
+        move || {(
+            add_entry.version().get(),
+            delete_entry.version().get()
+        )},
+        |_| get_entries()
+    );
 
     view! {
         <kbd>x resultaten</kbd>
@@ -111,16 +131,16 @@ fn AllEntries() -> impl IntoView {
                 </tr>
             </thead>
             <tbody>
-            <Transition fallback=move || view! {Loading...}>
+            <Transition>
                 {move || entry_resource.get().map(|entries| match entries {
-                    Err(_e) => view! {Error loading...}.into_view(),
+                    Err(_e) => view! {Error loading entries}.into_view(),
                     Ok(entries) => view! {
                         <For
                             each=move || entries.clone()
                             key=|entry| entry.id
                             let:entry
                         >
-                            <EntryRow entry/>
+                            <EntryRow entry delete_entry/>
                         </For>
                     }
                 })}
@@ -131,7 +151,9 @@ fn AllEntries() -> impl IntoView {
 }
 
 #[component]
-fn EntryRow(entry: Entry) -> impl IntoView {
+fn EntryRow(
+    entry: Entry, delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>
+) -> impl IntoView {
     let editing = create_rw_signal(false);
     view! {
         <tr>
@@ -151,10 +173,11 @@ fn EntryRow(entry: Entry) -> impl IntoView {
                 }
             >
                 // When editing
-                // TODO: make sure each input field matches with the api
-                <td><input type="text"/></td>
-                <td><input type="text"/></td>
-                <td><input type="text"/></td>
+                // <ActionForm action=update_entry>
+                <td><input type="text" name="id"/></td>
+                <td><input type="text" name="id"/></td>
+                <td><input type="text" name="created"/></td>
+                // </ActionForm>
             </Show>
             // TODO: only allow deletion and editing if authenticated
             <td>
@@ -166,18 +189,18 @@ fn EntryRow(entry: Entry) -> impl IntoView {
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                 </a>
-                <a
-                    href="#"
-                    on:click=move |_| { todo!() }
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                </a>
-                <a
-                    href="#"
-                    on:click=move |_| { todo!() }
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </a>
+                <ActionForm action=delete_entry>
+                    <input type="hidden" name="id" value={entry.id}/>
+                    <label for="submit"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </label>
+                    <input type="submit" name="submit"/>
+                </ActionForm>
+                // <ActionForm action=update_entry>
+                // <a href="#">
+                //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                // </a>
+                // </ActionForm>
             </td>
         </tr>
     }
@@ -185,6 +208,23 @@ fn EntryRow(entry: Entry) -> impl IntoView {
 
 #[component]
 fn LoginPage() -> impl IntoView {
-    todo!();
+    let login = create_server_action::<Login>();
+    view! {
+        <main class="container">
+            <ActionForm action=login>
+                <div class="grid">
+                    <label for="username">
+                        Gebruikersnaam
+                        <input type="text" id="username" name="username" placeholder="Gebruikersnaam" required/>
+                    </label>
+                    <label for="password">
+                        Wachtwoord
+                        <input type="password" id="password" name="password" placeholder="Wachtwoord" required/>
+                    </label>
+                </div>
+                <button type="submit">Inloggen</button>
+            </ActionForm>
+        </main>
+    }
 }
 

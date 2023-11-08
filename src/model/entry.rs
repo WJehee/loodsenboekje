@@ -15,8 +15,8 @@ pub struct Entry {
     pub created: chrono::NaiveDateTime,
 }
 
-#[server]
-pub async fn create_entry(how: String) -> Result<i64, ServerFnError> {
+#[server(AddEntry)]
+pub async fn add_entry(how: String) -> Result<i64, ServerFnError> {
     let db = db().await;
     let id = sqlx::query!("INSERT INTO entry (how) VALUES (?)", how)
         .execute(&db)
@@ -36,27 +36,16 @@ pub async fn get_entry(id: i64) -> Result<Entry, ServerFnError> {
 
 #[server]
 pub async fn get_entries() -> Result<Vec<Entry>, ServerFnError> {
-    Ok(vec![
-        Entry{
-            id: 1,
-            how: String::from("blabla"),
-            created: chrono::offset::Utc::now().naive_utc()
-        },
-        Entry{
-            id: 2,
-            how: String::from("blabla"),
-            created: chrono::offset::Utc::now().naive_utc()
-        }
-    ])
-    // let db = db().await;
-    // let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
-    //     .fetch_all(&db)
-    //     .await?;
-    // Ok(result)
+    let db = db().await;
+    let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
+        .fetch_all(&db)
+        .await?;
+    Ok(result)
 }
 
-#[server]
+#[server(DeleteEntry)]
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
+    println!("{id}");
     let db = db().await;
     sqlx::query!("DELETE FROM entry WHERE id = ?", id)
         .execute(&db)
