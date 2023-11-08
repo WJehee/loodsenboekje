@@ -2,6 +2,7 @@ use leptos::*;
 use leptos_meta::*;
 
 use crate::model::entry::{Entry, get_entries};
+use chrono::Datelike;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -134,40 +135,57 @@ fn AllEntries() -> impl IntoView {
 
 #[component]
 fn EntryRow(entry: Entry) -> impl IntoView {
+    let editing = create_rw_signal(false);
     view! {
         <tr>
             <td scope="row">{ entry.id}</td>
-            // <td>
-            //     <template v-if="!entry.editing">{{ entry.how}}</template>
-            //     <input v-else type="text" v-model="entry.how">
-            // </td>
-            // <td>
-            //     <template v-if="!entry.editing">{{ entry.who.join(', ') }}</template>
-            //     <input v-else type="text" v-model="entry.who">
-            // </td>
-            // <td>
-            //     <template v-if="!entry.editing">{{ entry.created }}</template>
-            //     <input v-else type="date" v-model="entry.created">
-            // </td>
-            // // <!-- only allow deletion and editing if authenticated -->
-            // // {% if current_user.is_authenticated %}
-            // <td>
-            //     <a href="#" v-if="!entry.editing" @click="editEntry(entry)">
-            //         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-            //     </a>
-            //     <div v-else style="display: flex; justify-content: space-between;">
-            //         <a href="#" @click="cancelEdit(entry)">
-            //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            //         </a>
-            //         <a href="#" @click="deleteEntry(entry.id)">
-            //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-            //         </a>
-            //         <a href="#" @click="saveEntry(entry)">
-            //             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            //         </a>
-            //     </div>
-            // </td>
-            // {% endif %}
+            <Show
+                when=move || { editing.get() }
+                // When not editing
+                fallback=move || view! {
+                    <td>{ &entry.how }</td>
+                    <td>Opa dorus</td>
+                    <td>{format!(
+                        "{:02}-{:02}-{:04}",
+                        &entry.created.day(),
+                        &entry.created.month(),
+                        &entry.created.year(),
+                    )}</td>
+                }
+            >
+                // When editing
+                // TODO: make sure each input field matches with the api
+                // how
+                <td><input type="text"/></td>
+                // who
+                <td><input type="text"/></td>
+                // created
+                <td><input type="text"/></td>
+            </Show>
+            // <!-- only allow deletion and editing if authenticated -->
+            // {% if current_user.is_authenticated %}
+            <td>
+                <a
+                    href="#"
+                    on:click=move |_| {
+                        editing.update(|v| *v = !*v)
+                    }
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </a>
+                <a
+                    href="#"
+                    on:click=move |_| { todo!() }
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </a>
+                <a
+                    href="#"
+                    on:click=move |_| { todo!() }
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </a>
+            </td>
         </tr>
     }
 }
