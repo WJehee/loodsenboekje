@@ -18,8 +18,9 @@ pub struct Entry {
 
 #[server(AddEntry)]
 pub async fn add_entry(how: String) -> Result<i64, ServerFnError> {
+    // TODO: also add users to who field
     let db = db().await;
-    let id = sqlx::query!("INSERT INTO entry (how) VALUES (?)", how)
+    let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
         .execute(&db)
         .await?
         .last_insert_rowid();
@@ -29,7 +30,7 @@ pub async fn add_entry(how: String) -> Result<i64, ServerFnError> {
 #[server]
 pub async fn get_entry(id: i64) -> Result<Entry, ServerFnError> {
     let db = db().await;
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entry WHERE id = ?", id)
+    let result = sqlx::query_as!(Entry, "SELECT * FROM entries WHERE id = ?", id)
         .fetch_one(&db)
         .await?;
     Ok(result)
@@ -38,7 +39,7 @@ pub async fn get_entry(id: i64) -> Result<Entry, ServerFnError> {
 #[server]
 pub async fn get_entries() -> Result<Vec<Entry>, ServerFnError> {
     let db = db().await;
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entry")
+    let result = sqlx::query_as!(Entry, "SELECT * FROM entries")
         .fetch_all(&db)
         .await?;
     Ok(result)
@@ -48,7 +49,7 @@ pub async fn get_entries() -> Result<Vec<Entry>, ServerFnError> {
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     println!("{id}");
     let db = db().await;
-    sqlx::query!("DELETE FROM entry WHERE id = ?", id)
+    sqlx::query!("DELETE FROM entries WHERE id = ?", id)
         .execute(&db)
         .await?;
     Ok(())
@@ -57,7 +58,7 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
 // #[server]
 // pub async fn update_entry(id: i64, how: String) -> Result<Entry, ServerFnError> {
 //     let db = db().await;
-//     let result = sqlx::query!("UPDATE entry SET how = ? WHERE id = ?", how, id)
+//     let result = sqlx::query!("UPDATE entries SET how = ? WHERE id = ?", how, id)
 //         .execute(&db)
 //         .await?;
 //     Ok(result)

@@ -158,34 +158,28 @@ fn EntryRow(
     view! {
         <tr>
             <td scope="row">{ entry.id }</td>
-            // TODO: change show component to simple if else, should be more efficient in this case
-            // because we always rerender when editing changes
-            <Show
-                when=move || { editing.get() }
-                // When not editing
-                fallback=move || view! {
-                    <td>{ &entry.how }</td>
-                    <td>Opa dorus</td>
-                }
-            >
-                // When editing
-                // TODO: put original values in value property of <input>
+            {move || if editing.get() { view! {
                 // <ActionForm action=update_entry>
-                <td><input type="text" name="how"/></td>
-                <td><input type="text" name="who"/></td>
+                <td><input type="text" name="how" value={&entry.how}/></td>
+                <td><input type="text" name="who" value="placeholder"/></td>
                 // <td>
                 // <a href="#">
                 //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 // </a>
                 // </td>
                 // </ActionForm>
-            </Show>
+            }} else { view! {
+                <td>{ &entry.how }</td>
+                // TODO: add actual usernames separated by commas
+                <td>Opa dorus</td>
+            }}}
             <td>{format!(
                 "{:02}-{:02}-{:04}",
                 &entry.created.day(),
                 &entry.created.month(),
                 &entry.created.year(),
             )}</td>
+
             // TODO: only show deletion and editing if authenticated
             <td>
                 <a

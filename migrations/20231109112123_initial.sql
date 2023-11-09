@@ -1,10 +1,10 @@
-CREATE TABLE entry (
+CREATE TABLE entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     how TEXT UNIQUE NOT NULL,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE entry_user (
+CREATE TABLE entry_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     entry_id INTEGER NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS user_permission (
+CREATE TABLE IF NOT EXISTS user_permissions (
     user_id INTEGER NOT NULL,
     permission TEXT NOT NULL
 );
