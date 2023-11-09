@@ -26,7 +26,6 @@ async fn main() {
         .with_state(leptos_options)
         .fallback_service(routes_static(&site_root))
     ;
-    println!("listening on address: {}", addr);
     axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
 }
 
@@ -36,5 +35,4 @@ fn routes_static(root: &str) -> axum::Router {
     use axum::routing::get_service;
     axum::Router::new().nest_service("/", get_service(ServeDir::new(root)))
 }
-
 
