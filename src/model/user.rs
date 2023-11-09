@@ -31,10 +31,10 @@ pub struct User {
 }
 
 #[cfg_attr(feature = "ssr", derive(FromRow))]
-struct SqlUser {
-    id: i64,
-    username: String,
-    password: String,
+pub struct SqlUser {
+    pub id: i64,
+    pub username: String,
+    pub password: String,
 }
 
 #[cfg_attr(feature = "ssr", derive(FromRow))]
@@ -42,12 +42,13 @@ struct SqlPermission {
     permission: String,
 }
 
-#[server]
+#[server(Register)]
 pub async fn create_user(username: String, password: String) -> Result<i64, ServerFnError> {
     use bcrypt::{hash, DEFAULT_COST};
 
     let db = db().await;
     let hashed_password = hash(password, DEFAULT_COST).unwrap();
+    // TODO: error message for duplicate users
     let id: i64 = sqlx::query!("INSERT INTO users (username, password) VALUES (?, ?)", username, hashed_password) 
         .execute(&db)
         .await?
@@ -60,6 +61,7 @@ pub async fn create_user(username: String, password: String) -> Result<i64, Serv
         .execute(&db)
         .await?;
 
+    println!("created user: '{username}', with id: '{id}'");
     Ok(id)
 }
 

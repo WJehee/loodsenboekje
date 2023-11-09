@@ -3,7 +3,7 @@ use leptos_meta::*;
 use leptos_router::*;
 
 use crate::{
-    model::entry::{Entry, get_entries, AddEntry, DeleteEntry},
+    model::{entry::{Entry, get_entries, AddEntry, DeleteEntry}, user::Register},
     auth::Login
 };
 use chrono::Datelike;
@@ -20,6 +20,7 @@ pub fn App() -> impl IntoView {
                     <Routes>
                         <Route path="" view=MainPage/>
                         <Route path="/login" view=LoginPage/>
+                        <Route path="/register" view=RegisterPage/>
                     </Routes>
                 </main>
             </Router>
@@ -46,18 +47,18 @@ fn NavBar() -> impl IntoView {
     view! {
         <nav>
             <ul>
-                <li><strong>Loodsen Boekje</strong></li>
+                <li><a href="/"><strong>Loodsen Boekje</strong></a></li>
             </ul>
             <ul>
                 // TODO: if user is authenticated, show username
                 <li>Ingelogd als PLACEHOLDER</li>
             </ul>
             <ul>
-                <li><a href="/">Lijst</a></li>
                 // TODO: if user is authenticated show this
                 <li><a href="/logout">Log uit</a></li>
                 // Else show this
                 <li><a href="/login">Log in</a></li>
+                <li><a href="/register">Nieuw account</a></li>
             </ul>
         </nav>
     }
@@ -208,7 +209,31 @@ fn LoginPage() -> impl IntoView {
     let login = create_server_action::<Login>();
     view! {
         <main class="container">
+            <h2>Login</h2>
             <ActionForm action=login>
+                <div class="grid">
+                    <label for="username">
+                        Gebruikersnaam
+                        <input type="text" name="username" placeholder="Gebruikersnaam" required/>
+                    </label>
+                    <label for="password">
+                        Wachtwoord
+                        <input type="password" name="password" placeholder="Wachtwoord" required/>
+                    </label>
+                </div>
+                <button type="submit">Inloggen</button>
+            </ActionForm>
+        </main>
+    }
+}
+
+#[component]
+fn RegisterPage() -> impl IntoView {
+    let register = create_server_action::<Register>();
+    view! {
+        <main class="container">
+            <h2>Registreer een nieuw account</h2>
+            <ActionForm action=register>
                 <div class="grid">
                     <label for="username">
                         Gebruikersnaam
@@ -219,7 +244,7 @@ fn LoginPage() -> impl IntoView {
                         <input type="password" id="password" name="password" placeholder="Wachtwoord" required/>
                     </label>
                 </div>
-                <button type="submit">Inloggen</button>
+                <button type="submit">Aanmelden</button>
             </ActionForm>
         </main>
     }
