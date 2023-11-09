@@ -5,7 +5,7 @@ pub mod entry;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
     use sqlx::SqlitePool;
-    async fn db() -> SqlitePool {
+    pub async fn db() -> SqlitePool {
         SqlitePool::connect("sqlite.db").await.unwrap()
     }
 }}
