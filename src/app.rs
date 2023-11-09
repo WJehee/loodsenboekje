@@ -10,6 +10,7 @@ use chrono::Datelike;
 
 #[component]
 pub fn App() -> impl IntoView {
+    provide_meta_context();
     view! {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"/>
         <Title text="Loodsen Boekje"/>
@@ -76,10 +77,10 @@ fn AddEntryForm(
                     Hoe/wat
                     <input type="text" name="how"/>
                 </label>
-                // <label for="who">
-                //     Wie (indien meer dan 1, voeg kommas toe)
-                //     <input type="text" name="who" placeholder="Opa Dorus" required/>
-                // </label>
+                <label for="who">
+                    Wie (indien meer dan 1, voeg kommas toe)
+                    <input type="text" name="who" placeholder="Opa Dorus" required/>
+                </label>
                 <button type="submit" role="button">Voeg toe</button>
             </ActionForm>
         </details>

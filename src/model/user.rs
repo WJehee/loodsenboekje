@@ -62,12 +62,12 @@ pub async fn create_user(username: String, password: String) -> Result<i64, Serv
         .await?;
 
     println!("created user: '{username}', with id: '{id}'");
+    // TODO: redirect to login page
     Ok(id)
 }
 
 #[server]
 pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
-    // Needed for string to permission enum
     use std::str::FromStr;
 
     let db = db().await;

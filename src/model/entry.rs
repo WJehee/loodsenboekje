@@ -17,13 +17,14 @@ pub struct Entry {
 }
 
 #[server(AddEntry)]
-pub async fn add_entry(how: String) -> Result<i64, ServerFnError> {
-    // TODO: also add users to who field
+pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
     let db = db().await;
     let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
         .execute(&db)
         .await?
         .last_insert_rowid();
+    // TODO: also add entries to entry_users table based on who string split by ","
+    println!("added entry: {how}");
     Ok(id)
 }
 
@@ -47,11 +48,11 @@ pub async fn get_entries() -> Result<Vec<Entry>, ServerFnError> {
 
 #[server(DeleteEntry)]
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
-    println!("{id}");
     let db = db().await;
     sqlx::query!("DELETE FROM entries WHERE id = ?", id)
         .execute(&db)
         .await?;
+    println!("deleted entry with id: {id}");
     Ok(())
 }
 

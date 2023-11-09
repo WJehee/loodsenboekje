@@ -1,14 +1,8 @@
-use cfg_if::cfg_if;
-
-cfg_if! { if #[cfg(feature = "ssr")] { 
-    use super::model::{db, user::SqlUser};
-}}
-
 use leptos::{ServerFnError, server};
 
 #[server(Login)]
 async fn login(username: String, password: String) -> Result<(), ServerFnError> { 
-    println!("login attempt: {username}:{password}");
+    use super::model::{db, user::SqlUser};
     use bcrypt::verify;
     
     let db = db().await;
@@ -16,7 +10,10 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
         .fetch_one(&db)
         .await?;
     match verify(password, &sqluser.password)? {
+        // TODO: create session for the user
+        // TODO: redirect to home page
         true => Ok(()),
+        // TODO: error handling
         false => Err(ServerFnError::ServerError("Password does not match".to_string()))
     }
 }
@@ -24,6 +21,7 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
 #[server(Logout)]
 async fn logout() -> Result<(), ServerFnError> {
     // TODO: remove user session
+    // TODO: redirect to login page
     Ok(())
 }
 
