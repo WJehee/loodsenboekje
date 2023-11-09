@@ -34,6 +34,7 @@ pub fn App() -> impl IntoView {
 #[component]
 fn MainPage() -> impl IntoView {
     let add_entry = create_server_action::<AddEntry>();
+    // TODO: show login page when not authenticated
     view! {
         <AddEntryForm add_entry/>
         <SearchBar add_entry/>
@@ -66,7 +67,6 @@ fn NavBar() -> impl IntoView {
 fn AddEntryForm(
     add_entry: Action<AddEntry, Result<i64, ServerFnError>>
 ) -> impl IntoView {
-    // TODO: show this form if user is authenticated, maybe one level higher?
     view! {
         <details>
             <summary role="button" class="outline">Voeg een biertje toe</summary>
@@ -90,6 +90,7 @@ fn SearchBar(
     add_entry: Action<AddEntry, Result<i64, ServerFnError>>
 ) -> impl IntoView {
     // TODO: filter (fuzzy) the list of entries based on the search string
+    // Look at this: https://leptos-rs.github.io/leptos/router/20_form.html
     let search_query = create_rw_signal("".to_string());
     let delete_entry = create_server_action::<DeleteEntry>();
     view! {
@@ -118,35 +119,34 @@ fn AllEntries(
         )},
         |_| get_entries()
     );
-
     view! {
-        <kbd>x resultaten</kbd>
-        <table>
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Hoe/wat</th>
-                    <th scope="col">Wie</th>
-                    <th scope="col">Datum</th>
-                </tr>
-            </thead>
-            <tbody>
-            <Transition>
-                {move || entry_resource.get().map(|entries| match entries {
-                    Err(_e) => view! {Error loading entries}.into_view(),
-                    Ok(entries) => view! {
-                        <For
-                            each=move || entries.clone()
-                            key=|entry| entry.id
-                            let:entry
-                        >
-                            <EntryRow entry delete_entry/>
-                        </For>
-                    }
-                })}
-            </Transition>
-            </tbody>
-            </table>
+        <Transition>
+            {move || entry_resource.get().map(|entries| match entries {
+                Err(_e) => view! {Error loading entries}.into_view(),
+                Ok(entries) => view! {
+                    <kbd>{ entries.len() } resultaten</kbd>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Hoe/wat</th>
+                                <th scope="col">Wie</th>
+                                <th scope="col">Datum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <For
+                                each=move || entries.clone()
+                                key=|entry| entry.id
+                                let:entry
+                            >
+                                <EntryRow entry delete_entry/>
+                            </For>
+                        </tbody>
+                    </table>
+                }.into_view()
+            })}
+        </Transition>
     }
 }
 
@@ -157,29 +157,36 @@ fn EntryRow(
     let editing = create_rw_signal(false);
     view! {
         <tr>
-            <td scope="row">{ entry.id}</td>
+            <td scope="row">{ entry.id }</td>
+            // TODO: change show component to simple if else, should be more efficient in this case
+            // because we always rerender when editing changes
             <Show
                 when=move || { editing.get() }
                 // When not editing
                 fallback=move || view! {
                     <td>{ &entry.how }</td>
                     <td>Opa dorus</td>
-                    <td>{format!(
-                        "{:02}-{:02}-{:04}",
-                        &entry.created.day(),
-                        &entry.created.month(),
-                        &entry.created.year(),
-                    )}</td>
                 }
             >
                 // When editing
+                // TODO: put original values in value property of <input>
                 // <ActionForm action=update_entry>
-                <td><input type="text" name="id"/></td>
-                <td><input type="text" name="id"/></td>
-                <td><input type="text" name="created"/></td>
+                <td><input type="text" name="how"/></td>
+                <td><input type="text" name="who"/></td>
+                // <td>
+                // <a href="#">
+                //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                // </a>
+                // </td>
                 // </ActionForm>
             </Show>
-            // TODO: only allow deletion and editing if authenticated
+            <td>{format!(
+                "{:02}-{:02}-{:04}",
+                &entry.created.day(),
+                &entry.created.month(),
+                &entry.created.year(),
+            )}</td>
+            // TODO: only show deletion and editing if authenticated
             <td>
                 <a
                     href="#"
@@ -191,16 +198,12 @@ fn EntryRow(
                 </a>
                 <ActionForm action=delete_entry>
                     <input type="hidden" name="id" value={entry.id}/>
-                    <label for="submit"> 
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </label>
-                    <input type="submit" name="submit"/>
+                    // <a href="#" on:click=move |ev| { DeleteEntry::from_event(&ev) }>
+                    //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    // </a>
+                    <input type="submit" name="submit" value="blalalla"/>
                 </ActionForm>
-                // <ActionForm action=update_entry>
-                // <a href="#">
-                //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                // </a>
-                // </ActionForm>
+
             </td>
         </tr>
     }

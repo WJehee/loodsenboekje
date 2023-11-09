@@ -12,6 +12,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
 pub struct Entry {
     pub id: i64,
     pub how: String,
+    // pub who: String,
     pub created: chrono::NaiveDateTime,
 }
 
