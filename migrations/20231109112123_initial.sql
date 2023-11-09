@@ -11,3 +11,15 @@ CREATE TABLE entry_user (
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (entry_id) REFERENCES entry (id)
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_permission (
+    user_id INTEGER NOT NULL,
+    permission TEXT NOT NULL
+);
+
