@@ -62,7 +62,7 @@ pub async fn create_user(username: String, password: String) -> Result<i64, Serv
         .await?;
 
     println!("created user: '{username}', with id: '{id}'");
-    // TODO: redirect to login page
+    leptos_axum::redirect("/login");
     Ok(id)
 }
 
