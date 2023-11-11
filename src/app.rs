@@ -4,24 +4,67 @@ use leptos_router::*;
 
 use crate::{
     model::{entry::{Entry, get_entries, AddEntry, DeleteEntry}, user::Register},
-    auth::Login
+    auth::{Login, current_user},
 };
 use chrono::Datelike;
 
 #[component]
 pub fn App() -> impl IntoView {
+    let login = create_server_action::<Login>();
+    let register = create_server_action::<Register>();
+
+    let add_entry = create_server_action::<AddEntry>();
+    
+    // upon page refresh this unloads for some reason?
+    let user = create_resource(
+        move || {
+            (
+                login.version().get(),
+                register.version().get(),
+                // logout.version().get(),
+            )
+        },
+        move |_| current_user(),
+    );
+
     provide_meta_context();
     view! {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"/>
         <Title text="Loodsen Boekje"/>
         <div class="container">
-            <NavBar/>
+            <nav>
+                <ul>
+                    <li><a href="/"><strong>Loodsen Boekje</strong></a></li>
+                </ul>
+                <ul>
+                    { move || match user.get() {
+                        Some(Ok(Some(user))) => view! { <li>Ingelogd als {user} </li> }.into_view(),
+                        _ => view! {}.into_view()
+                    }}
+                </ul>
+                <ul>
+                    { move || match user.get() {
+                        Some(Ok(Some(_))) => view! {<li><a href="/logout">Log uit</a></li>}.into_view(),
+                        _ => view! {
+                            <li><a href="/login">Log in</a></li>
+                            <li><a href="/register">Nieuw account</a></li>
+                        }.into_view()
+                    }}
+                </ul>
+            </nav>
             <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
                 <main>
                     <Routes>
-                        <Route path="" view=MainPage/>
-                        <Route path="/login" view=LoginPage/>
-                        <Route path="/register" view=RegisterPage/>
+                        <Route path="" view=move || view! {
+                            <AddEntryForm add_entry/>
+                            <SearchBar add_entry/>
+                        }/>
+                        <Route path="/login" view=move || view! {
+                            <LoginPage login/>
+                        }/>
+                        <Route path="/register" view=move || view! {
+                            <RegisterPage register/>
+                        }/>
                     </Routes>
                 </main>
             </Router>
@@ -30,38 +73,6 @@ pub fn App() -> impl IntoView {
             <hr/>
             View the <a href="https://github.com/WJehee/loodsenboekje.com">Source code</a>
         </footer>
-    }
-}
-
-#[component]
-fn MainPage() -> impl IntoView {
-    let add_entry = create_server_action::<AddEntry>();
-    // TODO: show login page when not authenticated
-    view! {
-        <AddEntryForm add_entry/>
-        <SearchBar add_entry/>
-    }
-}
-
-#[component]
-fn NavBar() -> impl IntoView {
-    view! {
-        <nav>
-            <ul>
-                <li><a href="/"><strong>Loodsen Boekje</strong></a></li>
-            </ul>
-            <ul>
-                // TODO: if user is authenticated, show username
-                <li>Ingelogd als PLACEHOLDER</li>
-            </ul>
-            <ul>
-                // TODO: if user is authenticated show this
-                <li><a href="/logout">Log uit</a></li>
-                // Else show this
-                <li><a href="/login">Log in</a></li>
-                <li><a href="/register">Nieuw account</a></li>
-            </ul>
-        </nav>
     }
 }
 
@@ -182,7 +193,7 @@ fn EntryRow(
                 &entry.created.year(),
             )}</td>
 
-            // TODO: only show deletion and editing if authenticated
+            // TODO: only show deletion and editing if user is authorized for these actions
             <td>
                 <a
                     href="#"
@@ -206,8 +217,7 @@ fn EntryRow(
 }
 
 #[component]
-fn LoginPage() -> impl IntoView {
-    let login = create_server_action::<Login>();
+fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
         <main class="container">
             <h2>Login</h2>
@@ -229,8 +239,7 @@ fn LoginPage() -> impl IntoView {
 }
 
 #[component]
-fn RegisterPage() -> impl IntoView {
-    let register = create_server_action::<Register>();
+fn RegisterPage(register: Action<Register, Result<i64, ServerFnError>>) -> impl IntoView {
     view! {
         <main class="container">
             <h2>Registreer een nieuw account</h2>
