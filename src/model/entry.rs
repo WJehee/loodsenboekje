@@ -3,7 +3,7 @@ use leptos::*;
 use cfg_if::cfg_if;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
-    use super::db;
+    use super::{db, user::get_user_by_username};
     use sqlx::FromRow;
 }}
 
@@ -12,7 +12,6 @@ cfg_if! { if #[cfg(feature = "ssr")] {
 pub struct Entry {
     pub id: i64,
     pub how: String,
-    // pub who: String,
     pub created: chrono::NaiveDateTime,
 }
 
@@ -23,8 +22,16 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
         .execute(&db)
         .await?
         .last_insert_rowid();
-    // TODO: also add entries to entry_users table based on who string split by ","
     println!("added entry: {how}");
+
+    for user in who.split(",") {
+        // TODO: if user does not exist, make one, without password so they can still register
+        let user = get_user_by_username(user.trim()).await?;
+        sqlx::query!("INSERT INTO user_entries (user_id, entry_id) VALUES (?, ?)", user.id, id)
+            .execute(&db)
+            .await?;
+        println!("added {} as author for entry", user.username);
+    }
     Ok(id)
 }
 
