@@ -4,18 +4,15 @@ use cfg_if::cfg_if;
 cfg_if! {
     if #[cfg(feature = "ssr")] {
         use super::model::session;
+        use super::model::user::get_user_by_username;
     }
 }
 
 #[server(Login)]
 async fn login(username: String, password: String) -> Result<(), ServerFnError> { 
-    use super::model::{db, user::SqlUser};
     use bcrypt::verify;
     
-    let db = db().await;
-    let sqluser = sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE username = ?", username)
-        .fetch_one(&db)
-        .await?;
+    let sqluser = get_user_by_username(&username).await?;
 
     match verify(password, &sqluser.password)? {
         true => {
@@ -29,7 +26,6 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
             leptos_axum::redirect("/");
             Ok(())
         },
-        // TODO: error message for user 
         false => Err(ServerFnError::ServerError("Password does not match".to_string()))
     }
 }

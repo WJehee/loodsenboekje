@@ -26,10 +26,14 @@ pub fn App() -> impl IntoView {
         },
         move |_| current_user(),
     );
-
     provide_meta_context();
+
     view! {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
+        <link rel="manifest" href="/site.webmanifest"/>
         <Title text="Loodsen Boekje"/>
         <div class="container">
             <nav>
