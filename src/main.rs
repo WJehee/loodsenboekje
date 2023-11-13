@@ -6,6 +6,8 @@ use cfg_if::cfg_if;
 
 cfg_if!{
     if #[cfg(feature = "ssr")] {
+        use dotenvy::dotenv;
+        use std::env;
         use axum_session::{Session, SessionConfig, SessionStore, SessionNullPool, SessionLayer, SecurityMode, Key};
         use axum::{
             Router,
@@ -18,7 +20,6 @@ cfg_if!{
         use leptos::*;
         use leptos::logging::log;
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
-
 
         use loodsenboekje::app::*;
 
@@ -50,7 +51,9 @@ cfg_if!{
 
         #[tokio::main]
         async fn main() {
-
+            dotenv().expect("Expected .env file to be present");
+            env::var("READ_PASSWORD").expect("Expected READ_PASSWORD to be set");
+            env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
 
             let session_config = SessionConfig::default()
                 .with_table_name("sessions")

@@ -15,7 +15,7 @@ pub fn App() -> impl IntoView {
 
     let add_entry = create_server_action::<AddEntry>();
     
-    // upon page refresh this unloads for some reason?
+    // TODO: fix page refresh unload
     let user = create_resource(
         move || {
             (
@@ -252,6 +252,10 @@ fn RegisterPage(register: Action<Register, Result<i64, ServerFnError>>) -> impl 
                     <label for="password">
                         Wachtwoord
                         <input type="password" id="password" name="password" placeholder="Wachtwoord" required/>
+                    </label>
+                    <label for="creation password">
+                        Registratie Wachtwoord 
+                        <input type="password" id="creation_password" name="creation_password" placeholder="Registratie Wachtwoord" required/>
                     </label>
                 </div>
                 <button type="submit">Aanmelden</button>

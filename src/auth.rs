@@ -17,18 +17,19 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
         .fetch_one(&db)
         .await?;
 
-    let session= session()?;
     match verify(password, &sqluser.password)? {
         true => {
             println!("User logged in as {username}");
 
+            let session= session()?;
             session.set_store(true);
+            session.set("user_id", sqluser.id);
             session.set("username", username);
 
             leptos_axum::redirect("/");
             Ok(())
         },
-        // TODO: error handling
+        // TODO: error message for user 
         false => Err(ServerFnError::ServerError("Password does not match".to_string()))
     }
 }
@@ -37,11 +38,9 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
 async fn logout() -> Result<(), ServerFnError> {
     println!("logout attempt");
 
-    let session = session().map_err(|err| {
-        eprintln!("Unable to retrieve session, err: {err}");
-        ServerFnError::ServerError("session error".into())
-    })?;
+    let session = session()?;
     if let Some(username) = session.get::<String>("username") {
+        // TODO: delete session
         println!("{username} logged out");
     };
 

@@ -15,11 +15,7 @@ CREATE TABLE entry_users (
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS user_permissions (
-    user_id INTEGER NOT NULL,
-    permission TEXT NOT NULL
+    password TEXT NOT NULL,
+    is_writer INT NOT NULL DEFAULT 0
 );
 
