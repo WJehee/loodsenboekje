@@ -12,9 +12,9 @@ cfg_if!{
         use axum::{
             Router,
             routing::get,
-            response::IntoResponse,
+            response::{IntoResponse, Redirect, Response},
             body::Body as AxumBody,
-            extract::{Path, RawQuery},
+            extract::{Path, RawQuery, State},
             http::{Request, header::HeaderMap}
         };
         use leptos::*;
@@ -34,17 +34,23 @@ cfg_if!{
             }, request).await
         }
 
-        // async fn leptos_routes_handler(
-        //     session: Session<SessionNullPool>,
-        //     req: Request<AxumBody>
-        //     ) -> Response {
-        //     let handler = leptos_axum::render_route_with_context(move || {
-        //         provide_context(session.clone());
-        //     },
-        //     App
-        //     );
-        //     handler(req).await.into_response()
-        // }
+        #[axum::debug_handler]
+        async fn leptos_routes_handler(session: Session<SessionNullPool>, State(leptos_options): State<LeptosOptions>, req: Request<AxumBody>) -> Response {
+            let handler = leptos_axum::render_app_to_stream_with_context(leptos_options.clone(),
+            move || {
+                provide_context(session.clone());
+            },
+            || view! { <App/> }
+            );
+            handler(req).await.into_response()
+        }
+
+        async fn home(session: Session<SessionNullPool>) -> Redirect {
+            match session.get::<String>("username") {
+                Some(_) => Redirect::temporary("/lijst"),
+                None => Redirect::temporary("/login"),
+            }
+        }
 
         #[tokio::main]
         async fn main() {
@@ -63,25 +69,17 @@ cfg_if!{
             let conf = get_configuration(None).await.unwrap();
             let leptos_options = conf.leptos_options;
             let addr = leptos_options.site_addr;
-            let site_root = leptos_options.site_root.clone();
             let routes = generate_route_list(App);
 
             let router = Router::new()
+                .route("/", get(home))
                 .route("/api/*fn_name", get(server_fn_handler).post(server_fn_handler))
-                .leptos_routes(&leptos_options, routes, App)
+                .leptos_routes_with_handler(routes, get(leptos_routes_handler))
                 .with_state(leptos_options)
-                .fallback_service(routes_static(&site_root))
                 .layer(SessionLayer::new(session_store))
                 ;
             axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
         }
-
-        fn routes_static(root: &str) -> axum::Router {
-            use tower_http::services::ServeDir;
-            use axum::routing::get_service;
-            axum::Router::new().nest_service("/", get_service(ServeDir::new(root)))
-        }
-
     } else {
         fn main() {}
     } 
