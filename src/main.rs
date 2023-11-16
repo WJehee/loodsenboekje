@@ -18,7 +18,6 @@ cfg_if!{
             http::{Request, header::HeaderMap}
         };
         use leptos::*;
-        use leptos::logging::log;
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
 
         use loodsenboekje::app::*;
@@ -30,8 +29,6 @@ cfg_if!{
             raw_query: RawQuery,
             request: Request<AxumBody>
             ) -> impl IntoResponse {
-            log!("{:?}", path);
-
             handle_server_fns_with_context(path, headers, raw_query, move || {
                 provide_context(session.clone());
             }, request).await

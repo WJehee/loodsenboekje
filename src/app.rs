@@ -29,7 +29,7 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@next/css/pico.min.css"/>
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
@@ -56,7 +56,7 @@ pub fn App() -> impl IntoView {
                     }}
                 </ul>
             </nav>
-            <Router fallback=|| view! { <h1>Error</h1> }.into_view()>
+            <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                 <main>
                     <Routes>
                         <Route path="" view=move || view! {
@@ -106,36 +106,38 @@ fn AddEntryForm(
 fn SearchBar(
     add_entry: Action<AddEntry, Result<i64, ServerFnError>>
 ) -> impl IntoView {
-    // TODO: filter (fuzzy) the list of entries based on the search string
-    // Look at this: https://leptos-rs.github.io/leptos/router/20_form.html
-    let search_query = create_rw_signal("".to_string());
+    let query = use_query_map();
+    let search = move || query().get("search").cloned().unwrap_or_default();
+
     let delete_entry = create_server_action::<DeleteEntry>();
+
+    let entry_resource = create_resource(
+        move || {(
+            search(),
+            add_entry.version().get(),
+            delete_entry.version().get(),
+        )},
+        |(query,  _, _)| get_entries(query)
+    );
     view! {
-        <form>
+        <Form method="GET" action="">
             <input
                 type="search"
+                name="search"
                 placeholder="Bier opener"
-                on:input=move |ev| {
-                    search_query.set(event_target_value(&ev))
-                }
-            ></input>
-        </form>
-        <AllEntries add_entry delete_entry/>
+                oninput="this.form.requestSubmit()"
+            />
+        </Form>
+        <h1>{search}</h1>
+        <AllEntries delete_entry entry_resource/>
     }
 }
 
 #[component]
 fn AllEntries(
-    add_entry: Action<AddEntry, Result<i64, ServerFnError>>,
     delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
+    entry_resource: Resource<(String, usize, usize), Result<Vec<Entry>, ServerFnError>>
 ) -> impl IntoView {
-    let entry_resource = create_resource(
-        move || {(
-            add_entry.version().get(),
-            delete_entry.version().get()
-        )},
-        |_| get_entries()
-    );
     view! {
         <Transition>
             {move || entry_resource.get().map(|entries| match entries {
@@ -149,6 +151,7 @@ fn AllEntries(
                                 <th scope="col">Hoe/wat</th>
                                 <th scope="col">Wie</th>
                                 <th scope="col">Datum</th>
+                                <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -169,52 +172,29 @@ fn AllEntries(
 
 #[component]
 fn EntryRow(
-    entry: Entry, delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>
+    entry: Entry,
+    delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
 ) -> impl IntoView {
-    let editing = create_rw_signal(false);
     view! {
         <tr>
             <td scope="row">{ entry.id }</td>
-            {move || if editing.get() { view! {
-                // <ActionForm action=update_entry>
-                <td><input type="text" name="how" value={&entry.how}/></td>
-                <td><input type="text" name="who" value="placeholder"/></td>
-                // <td>
-                // <a href="#">
-                //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                // </a>
-                // </td>
-                // </ActionForm>
-            }} else { view! {
-                <td>{ &entry.how }</td>
-                // TODO: add actual usernames separated by commas
-                <td>Opa dorus</td>
-            }}}
+            <td>{ &entry.how }</td>
+            // TODO: add actual usernames separated by commas
+            <td>Opa dorus</td>
             <td>{format!(
                 "{:02}-{:02}-{:04}",
                 &entry.created.day(),
                 &entry.created.month(),
                 &entry.created.year(),
             )}</td>
-
-            // TODO: only show deletion and editing if user is authorized for these actions
+            // TODO: only show deletion if authorized
             <td>
-                <a
-                    href="#"
-                    on:click=move |_| {
-                        editing.update(|v| *v = !*v)
-                    }
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                </a>
                 <ActionForm action=delete_entry>
                     <input type="hidden" name="id" value={entry.id}/>
-                    // <a href="#" on:click=move |ev| { DeleteEntry::from_event(&ev) }>
-                    //     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    // </a>
-                    <input type="submit" name="submit" value="blalalla"/>
+                    <button type="submit" name="submit" class="outline secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>
                 </ActionForm>
-
             </td>
         </tr>
     }
@@ -257,11 +237,11 @@ fn RegisterPage(register: Action<Register, Result<i64, ServerFnError>>) -> impl 
                         Wachtwoord
                         <input type="password" id="password" name="password" placeholder="Wachtwoord" required/>
                     </label>
-                    <label for="creation password">
-                        Registratie Wachtwoord 
-                        <input type="password" id="creation_password" name="creation_password" placeholder="Registratie Wachtwoord" required/>
-                    </label>
                 </div>
+                <label for="creation password">
+                    Registratie Wachtwoord 
+                    <input type="password" id="creation_password" name="creation_password" placeholder="Registratie Wachtwoord" required/>
+                </label>
                 <button type="submit">Aanmelden</button>
             </ActionForm>
         </main>
