@@ -41,7 +41,7 @@ pub struct User {
 }
 
 #[server(Register)]
-pub async fn create_user(username: String, password: String, creation_password: String) -> Result<i64, ServerFnError> {
+pub async fn create_user(username: String, password: String, creation_password: String) -> Result<(), ServerFnError> {
     use bcrypt::{hash, DEFAULT_COST};
     use std::env;
 
@@ -67,7 +67,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
 
     println!("created user: '{username}', with id: '{id}'");
     leptos_axum::redirect("/login");
-    Ok(id)
+    Ok(())
 }
 
 #[server]

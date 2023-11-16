@@ -4,7 +4,7 @@ use leptos_router::*;
 
 use crate::{
     model::{entry::{Entry, get_entries, AddEntry, DeleteEntry}, user::Register},
-    auth::{Login, current_user},
+    auth::{Login, Logout, current_user},
 };
 use chrono::Datelike;
 
@@ -12,18 +12,15 @@ use chrono::Datelike;
 pub fn App() -> impl IntoView {
     let login = create_server_action::<Login>();
     let register = create_server_action::<Register>();
-
+    let logout = create_server_action::<Logout>();
     let add_entry = create_server_action::<AddEntry>();
     
-    // TODO: fix page refresh unload
     let user = create_resource(
-        move || {
-            (
-                login.version().get(),
-                register.version().get(),
-                // logout.version().get(),
-            )
-        },
+        move || {(
+            login.version().get(),
+            register.version().get(),
+            logout.version().get(),
+        )},
         move |_| current_user(),
     );
     provide_meta_context();
@@ -40,26 +37,43 @@ pub fn App() -> impl IntoView {
                 <ul>
                     <li><a href="/"><strong>Loodsen Boekje</strong></a></li>
                 </ul>
-                <ul>
-                    { move || match user.get() {
-                        Some(Ok(Some(user))) => view! { <li>Ingelogd als {user} </li> }.into_view(),
-                        _ => view! {}.into_view()
-                    }}
-                </ul>
-                <ul>
-                    { move || match user.get() {
-                        Some(Ok(Some(_))) => view! {<li><a href="/logout">Log uit</a></li>}.into_view(),
-                        _ => view! {
-                            <li><a href="/login">Log in</a></li>
+                <Transition
+                    fallback=move || view!{<span>Loading...</span>}
+                >
+                { move || user.get().map(|user| match user {
+                    Ok(Some(user)) => view! {
+                        <ul>
+                            <li>Ingelogd als {user}</li>
+                        </ul>
+                        <ul>
+                            <li>
+                                <ActionForm action=logout>
+                                    <input type="submit" value="Log uit"/>
+                                </ActionForm>
+                            </li>
+                        </ul>
+                    }.into_view(),
+                    _ => view! {
+                        <ul>
+                            <li>Niet ingelogd</li>
+                        </ul>
+                        <ul>
+                            <li><a href="/login">Login</a></li>
                             <li><a href="/register">Nieuw account</a></li>
-                        }.into_view()
-                    }}
-                </ul>
+                            <li>
+                                <ActionForm action=logout>
+                                    <input type="submit" value="Log uit"/>
+                                </ActionForm>
+                            </li>
+                        </ul>
+                    }.into_view()
+                })}
+            </Transition>
             </nav>
             <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                 <main>
                     <Routes>
-                        <Route path="" view=move || view! {
+                        <Route path="/lijst" view=move || view! {
                             <AddEntryForm add_entry/>
                             <SearchBar add_entry/>
                         }/>
@@ -223,7 +237,7 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
 }
 
 #[component]
-fn RegisterPage(register: Action<Register, Result<i64, ServerFnError>>) -> impl IntoView {
+fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
         <main class="container">
             <h2>Registreer een nieuw account</h2>
