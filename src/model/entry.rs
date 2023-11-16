@@ -45,9 +45,11 @@ pub async fn get_entry(id: i64) -> Result<Entry, ServerFnError> {
 }
 
 #[server]
-pub async fn get_entries() -> Result<Vec<Entry>, ServerFnError> {
+pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
     let db = db().await;
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entries")
+    // TODO: check this, pretty sure this is secure, as the sql query is still prepared
+    let query = format!("%{query}%");
+    let result = sqlx::query_as!(Entry, "SELECT * FROM entries WHERE how LIKE ?", query)
         .fetch_all(&db)
         .await?;
     Ok(result)
@@ -62,13 +64,4 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     println!("deleted entry with id: {id}");
     Ok(())
 }
-
-// #[server]
-// pub async fn update_entry(id: i64, how: String) -> Result<Entry, ServerFnError> {
-//     let db = db().await;
-//     let result = sqlx::query!("UPDATE entries SET how = ? WHERE id = ?", how, id)
-//         .execute(&db)
-//         .await?;
-//     Ok(result)
-// }
 
