@@ -12,7 +12,7 @@ cfg_if!{
         use axum::{
             Router,
             routing::get,
-            response::{IntoResponse, Redirect, Response},
+            response::{IntoResponse, Response},
             body::Body as AxumBody,
             extract::{Path, RawQuery, State},
             http::{Request, header::HeaderMap}
@@ -45,11 +45,10 @@ cfg_if!{
             handler(req).await.into_response()
         }
 
-        async fn home(session: Session<SessionNullPool>) -> Redirect {
-            match session.get::<String>("username") {
-                Some(_) => Redirect::temporary("/lijst"),
-                None => Redirect::temporary("/login"),
-            }
+        fn routes_static(root: &str) -> axum::Router {
+            use tower_http::services::ServeDir;
+            use axum::routing::get_service;
+            axum::Router::new().nest_service("/", get_service(ServeDir::new(root)))
         }
 
         #[tokio::main]
@@ -69,13 +68,14 @@ cfg_if!{
             let conf = get_configuration(None).await.unwrap();
             let leptos_options = conf.leptos_options;
             let addr = leptos_options.site_addr;
+            let site_root = leptos_options.site_root.clone();
             let routes = generate_route_list(App);
 
             let router = Router::new()
-                .route("/", get(home))
                 .route("/api/*fn_name", get(server_fn_handler).post(server_fn_handler))
                 .leptos_routes_with_handler(routes, get(leptos_routes_handler))
                 .with_state(leptos_options)
+                .fallback_service(routes_static(&site_root))
                 .layer(SessionLayer::new(session_store))
                 ;
             axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
