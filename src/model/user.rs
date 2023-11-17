@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 use leptos::*;
 use cfg_if::cfg_if;
+use std::fmt;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
     use super::db;
     use sqlx::FromRow;
+    use crate::auth::user;
 
     #[derive(FromRow)]
     pub struct SqlUser {
@@ -33,11 +35,18 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     }
 }}
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
     pub id: i64,
     pub name: String,
+    // TODO: maybe we do want an enum here in the end, reader, writer and admin
     pub is_writer: bool,
+}
+
+impl fmt::Display for User {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({})", self.name, self.id)
+    }
 }
 
 #[server(Register)]
@@ -52,7 +61,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
         p if p == read_password => Ok(false),
         p if p == write_password => Ok(true),
         _ => {
-            eprintln!("Invalid account creation password");
+            println!("Invalid account creation password");
             Err(ServerFnError::ServerError("Invalid account creation password".into()))
         },
     }?;
@@ -65,13 +74,14 @@ pub async fn create_user(username: String, password: String, creation_password: 
         .await?
         .last_insert_rowid();
 
-    println!("created user: '{username}', with id: '{id}'");
+    println!("Created user: '{username}', with id: '{id}'");
     leptos_axum::redirect("/login");
     Ok(())
 }
 
 #[server]
 pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
+    user()?;
     let db = db().await;
     let sqluser = sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE id = ?", id)
         .fetch_one(&db)
@@ -81,10 +91,22 @@ pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
 
 #[server]
 pub async fn delete(id: i64) -> Result<(), ServerFnError> {
-    let db = db().await;
-    sqlx::query!("DELETE FROM users WHERE id = ?", id)
-        .execute(&db)
-        .await?;
-    Ok(())
+    let user = user()?;
+    match id {
+        id if id == user.id => {
+            // only allow deletion of own account if regular user
+            let db = db().await;
+            sqlx::query!("DELETE FROM users WHERE id = ?", id)
+                .execute(&db)
+                .await?;
+            println!("{user}, deleted user with id: {id}");
+            Ok(())
+        },
+        id => {
+            // TODO: maybe add clause for admin user
+            println!("{user} tried to delete account with id: {id}");
+            Err(ServerFnError::ServerError("No permission to delete this account".into()))
+        }
+    }
 }
 

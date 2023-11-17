@@ -60,11 +60,6 @@ pub fn App() -> impl IntoView {
                         <ul>
                             <li><a href="/login">Login</a></li>
                             <li><a href="/register">Nieuw account</a></li>
-                            <li>
-                                <ActionForm action=logout>
-                                    <input type="submit" value="Log uit"/>
-                                </ActionForm>
-                            </li>
                         </ul>
                     }.into_view()
                 })}
@@ -73,7 +68,7 @@ pub fn App() -> impl IntoView {
             <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                 <main>
                     <Routes>
-                        <Route path="/lijst" view=move || view! {
+                        <Route path="/" view=move || view! {
                             <AddEntryForm add_entry/>
                             <SearchBar add_entry/>
                         }/>
