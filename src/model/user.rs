@@ -35,6 +35,12 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     }
 }}
 
+pub const MIN_PASSWORD_LENGTH: usize = 8;
+
+pub fn validate_password(passwd: &str) -> bool {
+    passwd.len() >= MIN_PASSWORD_LENGTH
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
     pub id: i64,
@@ -54,8 +60,8 @@ pub async fn create_user(username: String, password: String, creation_password: 
     use bcrypt::{hash, DEFAULT_COST};
     use std::env;
 
-    let read_password = env::var("READ_PASSWORD").unwrap();
-    let write_password = env::var("WRITE_PASSWORD").unwrap();
+    let read_password = env::var("READ_PASSWORD").expect("READ_PASSWORD to be set");
+    let write_password = env::var("WRITE_PASSWORD").expect("WRITE_PASSWORD to be set");
 
     let is_writer = match creation_password {
         p if p == read_password => Ok(false),
@@ -65,6 +71,10 @@ pub async fn create_user(username: String, password: String, creation_password: 
             Err(ServerFnError::ServerError("Invalid account creation password".into()))
         },
     }?;
+
+    if !validate_password(&password) {
+        return Err(ServerFnError::ServerError(format!("Password is too short, requires at least {MIN_PASSWORD_LENGTH} characters")))
+    }
 
     let db = db().await;
     let username = username.to_ascii_lowercase();

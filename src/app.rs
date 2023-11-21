@@ -3,7 +3,7 @@ use leptos_meta::*;
 use leptos_router::*;
 
 use crate::{
-    model::{entry::{Entry, get_entries, AddEntry, DeleteEntry}, user::Register},
+    model::{entry::{Entry, get_entries, AddEntry, DeleteEntry}, user::{Register, validate_password}},
     auth::{Login, Logout, current_user},
 };
 use chrono::Datelike;
@@ -65,8 +65,8 @@ pub fn App() -> impl IntoView {
                 })}
             </Transition>
             </nav>
-            <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
-                <main>
+            <main>
+                <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                     <Routes>
                         <Route path="/" view=move || view! {
                             <AddEntryForm add_entry/>
@@ -79,8 +79,8 @@ pub fn App() -> impl IntoView {
                             <RegisterPage register/>
                         }/>
                     </Routes>
-                </main>
-            </Router>
+                </Router>
+            </main>
         </div>
         <footer class="container">
             <hr/>
@@ -137,7 +137,6 @@ fn SearchBar(
                 oninput="this.form.requestSubmit()"
             />
         </Form>
-        <h1>{search}</h1>
         <AllEntries delete_entry entry_resource/>
     }
 }
@@ -150,7 +149,8 @@ fn AllEntries(
     view! {
         <Transition>
             {move || entry_resource.get().map(|entries| match entries {
-                Err(_e) => view! {Error loading entries}.into_view(),
+                // TODO: display error more nicely
+                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
                 Ok(entries) => view! {
                     <kbd>{ entries.len() } resultaten</kbd>
                     <table>
@@ -211,6 +211,7 @@ fn EntryRow(
 
 #[component]
 fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
+    let valid_password = create_rw_signal("");
     view! {
         <main class="container">
             <h2>Login</h2>
@@ -222,7 +223,17 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
                     </label>
                     <label for="password">
                         Wachtwoord
-                        <input type="password" name="password" placeholder="Wachtwoord" required/>
+                        <input type="password" name="password" placeholder="Wachtwoord" required
+                            aria-invalid=valid_password
+                            on:input=move |ev| {
+                                let passwd = event_target_value(&ev);
+                                if validate_password(&passwd) {
+                                    valid_password.set("true");
+                                } else {
+                                    valid_password.set("false");
+                                }
+                            }
+                        />
                     </label>
                 </div>
                 <button type="submit">Inloggen</button>
@@ -233,6 +244,7 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
 
 #[component]
 fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl IntoView {
+    let valid_password = create_rw_signal("");
     view! {
         <main class="container">
             <h2>Registreer een nieuw account</h2>
@@ -244,7 +256,17 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
                     </label>
                     <label for="password">
                         Wachtwoord
-                        <input type="password" id="password" name="password" placeholder="Wachtwoord" required/>
+                        <input type="password" id="password" name="password" placeholder="Wachtwoord" required
+                            aria-invalid=valid_password
+                            on:input=move |ev| {
+                                let passwd = event_target_value(&ev);
+                                if validate_password(&passwd) {
+                                    valid_password.set("true");
+                                } else {
+                                    valid_password.set("false");
+                                }
+                            }
+                        />
                     </label>
                 </div>
                 <label for="creation password">
