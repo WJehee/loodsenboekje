@@ -3,7 +3,7 @@ use leptos::*;
 use cfg_if::cfg_if;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
-    use super::{db, user::{UserType, get_user_by_username}};
+    use super::{db, user::{UserType, get_user_by_username, get_user_by_id, create_inactive_user}};
     use crate::auth::user;
     use sqlx::FromRow;
 }}
@@ -20,7 +20,7 @@ pub struct Entry {
 pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::READER => {
+        UserType::READER | UserType::INACTIVE => {
             println!("{user} does not have permission to add a new entry");
             Err(ServerFnError::ServerError("Invalid permission".into()))
         }
@@ -34,8 +34,15 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
             println!("{user} added entry: {how}");
 
             for maybe_username in who.split(",") {
-                // TODO: if user does not exist, make one, without password so they can still register
-                let entry_user = get_user_by_username(maybe_username.trim()).await?;
+                let maybe_username = maybe_username.trim();
+                let entry_user = match get_user_by_username(maybe_username).await {
+                    Ok(user) => user,
+                    Err(_) => {
+                        let id = create_inactive_user(maybe_username).await?;
+                        get_user_by_id(id).await?
+                    },
+                };
+
                 sqlx::query!("INSERT INTO user_entries (user_id, entry_id) VALUES (?, ?)", entry_user.id, id)
                     .execute(&db)
                     .await?;
@@ -73,7 +80,7 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::READER => {
+        UserType::READER | UserType::INACTIVE => {
             println!("Invalid permission to delete entry for {} ({})", user.name, user.id);
             Err(ServerFnError::ServerError("Invalid permission".into()))
         }
