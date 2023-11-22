@@ -188,8 +188,8 @@ fn EntryRow(
         <tr>
             <td scope="row">{ entry.id }</td>
             <td>{ &entry.how }</td>
-            // TODO: add actual usernames separated by commas
-            <td>Opa dorus</td>
+            <td>Opa Dorus</td>
+            // <td>{ &entry.who }</td>
             <td>{format!(
                 "{:02}-{:02}-{:04}",
                 &entry.created.day(),
@@ -256,7 +256,7 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
                     </label>
                     <label for="password">
                         Wachtwoord
-                        <input type="password" id="password" name="password" placeholder="Wachtwoord" required
+                        <input type="password" id="password" name="password" placeholder="Wachtwoord"
                             aria-invalid=invalid_password
                             on:input=move |ev| {
                                 let passwd = event_target_value(&ev);

@@ -22,10 +22,11 @@ cfg_if! { if #[cfg(feature = "ssr")] {
                 id: sqluser.id,
                 name: sqluser.username,
                 user_type: match sqluser.user_type {
+                    0 => UserType::READER,
                     1 => UserType::WRITER,
                     2 => UserType::ADMIN,
-                    // 0 or any other (should not happen) is set to lowest priviledges
-                    _ => UserType::READER,
+                    //  any other (should not happen) is set to lowest priviledges
+                    _ => UserType::INACTIVE,
                 },
             }
         }
@@ -36,6 +37,25 @@ cfg_if! { if #[cfg(feature = "ssr")] {
         sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE username = ?", username)
             .fetch_one(&db)
             .await
+    }
+
+    pub async fn get_user_by_id(id: i64) -> Result<SqlUser, sqlx::Error> {
+        let db = db().await;
+        sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE id = ?", id)
+            .fetch_one(&db)
+            .await
+    }
+
+    pub async fn create_inactive_user(username: &str) -> Result<i64, ServerFnError> {
+        let db = db().await;
+        let username = username.to_ascii_lowercase();
+        let empty_password = String::new();
+        let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::INACTIVE as i64)
+            .execute(&db)
+            .await?
+            .last_insert_rowid();
+        println!("Created inactive user: '{username}', with id: '{id}'");
+        Ok(id)
     }
 }}
 
@@ -50,6 +70,7 @@ pub enum UserType {
     READER,
     WRITER,
     ADMIN,
+    INACTIVE,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -92,12 +113,21 @@ pub async fn create_user(username: String, password: String, creation_password: 
     let username = username.to_ascii_lowercase();
     let hashed_password = hash(password, DEFAULT_COST).unwrap();
     let user_type = user_type as i64;
-    let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, hashed_password, user_type)
-        .execute(&db)
-        .await?
-        .last_insert_rowid();
 
-    println!("Created user: '{username}', with id: '{id}'");
+    if let Ok(user) = get_user_by_username(&username).await {
+        let id: i64 = sqlx::query!("UPDATE users SET password = ?, user_type = ? WHERE id = ?", hashed_password, user_type, user.id)
+            .execute(&db)
+            .await?
+            .last_insert_rowid();
+        println!("User: {username}, with id: {id} activated their account");
+    } else {
+        let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, hashed_password, user_type)
+            .execute(&db)
+            .await?
+            .last_insert_rowid();
+        println!("Created user: '{username}', with id: '{id}'");
+    }
+
     leptos_axum::redirect("/login");
     Ok(())
 }
@@ -105,10 +135,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
 #[server]
 pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
     user()?;
-    let db = db().await;
-    let sqluser = sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE id = ?", id)
-        .fetch_one(&db)
-        .await?;
+    let sqluser = get_user_by_id(id).await?;
     Ok(sqluser.into())
 }
 
