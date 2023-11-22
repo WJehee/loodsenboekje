@@ -46,6 +46,7 @@ pub fn App() -> impl IntoView {
                             <li>Ingelogd als {user}</li>
                         </ul>
                         <ul>
+                            <li><a href="/leaderboard">Leaderboard</a></li>
                             <li>
                                 <ActionForm action=logout>
                                     <input type="submit" value="Log uit"/>
@@ -78,6 +79,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/register" view=move || view! {
                             <RegisterPage register/>
                         }/>
+                        <Route path="/leaderboard" view=LeaderBoard/>
                     </Routes>
                 </Router>
             </main>
@@ -196,7 +198,6 @@ fn EntryRow(
                 &entry.created.month(),
                 &entry.created.year(),
             )}</td>
-            // TODO: only show deletion if authorized
             <td>
                 <ActionForm action=delete_entry>
                     <input type="hidden" name="id" value={entry.id}/>
@@ -276,6 +277,13 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
                 <button type="submit">Aanmelden</button>
             </ActionForm>
         </main>
+    }
+}
+
+#[component]
+fn LeaderBoard() -> impl IntoView {
+    view!{
+        <h1>Leaderboard!</h1>
     }
 }
 
