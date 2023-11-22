@@ -10,6 +10,7 @@ Create a .env file with the following values:
 
 - READER_PASSWORD
 - WRITER_PASSWORD
+- ADMIN_PASSWORD
 
 ## Make sure sqlx-cli is installed
 ```
