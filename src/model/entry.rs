@@ -3,7 +3,7 @@ use leptos::*;
 use cfg_if::cfg_if;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
-    use super::{db, user::get_user_by_username};
+    use super::{db, user::{UserType, get_user_by_username}};
     use crate::auth::user;
     use sqlx::FromRow;
 }}
@@ -18,10 +18,13 @@ pub struct Entry {
 
 #[server(AddEntry)]
 pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
-    // check if user has permission to add
     let user = user()?;
-    match user.is_writer {
-        true => {
+    match user.user_type {
+        UserType::READER => {
+            println!("{user} does not have permission to add a new entry");
+            Err(ServerFnError::ServerError("Invalid permission".into()))
+        }
+        UserType::ADMIN | UserType::WRITER => {
             let db = db().await;
 
             let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
@@ -40,12 +43,7 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
             }
             Ok(id)
         },
-        false => {
-            println!("{user} does not have permission to add a new entry");
-            Err(ServerFnError::ServerError("Invalid permission".into()))
-        }
     }
-
 }
 
 #[server]
@@ -74,8 +72,12 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
 #[server(DeleteEntry)]
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
-    match user.is_writer {
-        true => {
+    match user.user_type {
+        UserType::READER => {
+            println!("Invalid permission to delete entry for {} ({})", user.name, user.id);
+            Err(ServerFnError::ServerError("Invalid permission".into()))
+        }
+        UserType::ADMIN | UserType::WRITER => {
             let db = db().await;
             sqlx::query!("DELETE FROM entries WHERE id = ?", id)
                 .execute(&db)
@@ -83,10 +85,6 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
             println!("{} ({}) deleted entry with id: {id}", user.name, user.id);
             Ok(())
         },
-        false => {
-            println!("Invalid permission to delete entry for {} ({})", user.name, user.id);
-            Err(ServerFnError::ServerError("Invalid permission".into()))
-        }
     }
 }
 

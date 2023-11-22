@@ -13,7 +13,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
         pub id: i64,
         pub username: String,
         pub password: String,
-        pub is_writer: i64,
+        pub user_type: i64,
     }
 
     impl From<SqlUser> for User {
@@ -21,8 +21,12 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             User {
                 id: sqluser.id,
                 name: sqluser.username,
-                // SQLite stores bool as int, 0 = false, 1 = true
-                is_writer: sqluser.is_writer == 1,
+                user_type: match sqluser.user_type {
+                    1 => UserType::WRITER,
+                    2 => UserType::ADMIN,
+                    // 0 or any other (should not happen) is set to lowest priviledges
+                    _ => UserType::READER,
+                },
             }
         }
     }
@@ -35,18 +39,24 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     }
 }}
 
-pub const MIN_PASSWORD_LENGTH: usize = 8;
+const MIN_PASSWORD_LENGTH: usize = 8;
 
 pub fn validate_password(passwd: &str) -> bool {
     passwd.len() >= MIN_PASSWORD_LENGTH
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum UserType {
+    READER,
+    WRITER,
+    ADMIN,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct User {
     pub id: i64,
     pub name: String,
-    // TODO: maybe we do want an enum here in the end, reader, writer and admin
-    pub is_writer: bool,
+    pub user_type: UserType,
 }
 
 impl fmt::Display for User {
@@ -62,10 +72,12 @@ pub async fn create_user(username: String, password: String, creation_password: 
 
     let read_password = env::var("READ_PASSWORD").expect("READ_PASSWORD to be set");
     let write_password = env::var("WRITE_PASSWORD").expect("WRITE_PASSWORD to be set");
+    let admin_password = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD to be set");
 
-    let is_writer = match creation_password {
-        p if p == read_password => Ok(false),
-        p if p == write_password => Ok(true),
+    let user_type = match creation_password {
+        p if p == read_password => Ok(UserType::READER),
+        p if p == write_password => Ok(UserType::WRITER),
+        p if p == admin_password => Ok(UserType::ADMIN),
         _ => {
             println!("Invalid account creation password");
             Err(ServerFnError::ServerError("Invalid account creation password".into()))
@@ -79,7 +91,8 @@ pub async fn create_user(username: String, password: String, creation_password: 
     let db = db().await;
     let username = username.to_ascii_lowercase();
     let hashed_password = hash(password, DEFAULT_COST).unwrap();
-    let id: i64 = sqlx::query!("INSERT INTO users (username, password, is_writer) VALUES (?, ?, ?)", username, hashed_password, is_writer)
+    let user_type = user_type as i64;
+    let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, hashed_password, user_type)
         .execute(&db)
         .await?
         .last_insert_rowid();
@@ -102,9 +115,8 @@ pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
 #[server]
 pub async fn delete(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
-    match id {
-        id if id == user.id => {
-            // only allow deletion of own account if regular user
+    match (&user.user_type, id) {
+        (UserType::ADMIN, id) |(_, id) if id == id => {
             let db = db().await;
             sqlx::query!("DELETE FROM users WHERE id = ?", id)
                 .execute(&db)
@@ -112,8 +124,7 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
             println!("{user}, deleted user with id: {id}");
             Ok(())
         },
-        id => {
-            // TODO: maybe add clause for admin user
+        (_, id) => {
             println!("{user} tried to delete account with id: {id}");
             Err(ServerFnError::ServerError("No permission to delete this account".into()))
         }

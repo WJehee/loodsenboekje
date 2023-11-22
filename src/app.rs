@@ -211,7 +211,7 @@ fn EntryRow(
 
 #[component]
 fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
-    let valid_password = create_rw_signal("");
+    let invalid_password = create_rw_signal("");
     view! {
         <main class="container">
             <h2>Login</h2>
@@ -224,13 +224,13 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
                     <label for="password">
                         Wachtwoord
                         <input type="password" name="password" placeholder="Wachtwoord" required
-                            aria-invalid=valid_password
+                            aria-invalid=invalid_password
                             on:input=move |ev| {
                                 let passwd = event_target_value(&ev);
                                 if validate_password(&passwd) {
-                                    valid_password.set("true");
+                                    invalid_password.set("false");
                                 } else {
-                                    valid_password.set("false");
+                                    invalid_password.set("true");
                                 }
                             }
                         />
@@ -244,7 +244,7 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
 
 #[component]
 fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl IntoView {
-    let valid_password = create_rw_signal("");
+    let invalid_password = create_rw_signal("");
     view! {
         <main class="container">
             <h2>Registreer een nieuw account</h2>
@@ -257,13 +257,13 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
                     <label for="password">
                         Wachtwoord
                         <input type="password" id="password" name="password" placeholder="Wachtwoord" required
-                            aria-invalid=valid_password
+                            aria-invalid=invalid_password
                             on:input=move |ev| {
                                 let passwd = event_target_value(&ev);
                                 if validate_password(&passwd) {
-                                    valid_password.set("true");
+                                    invalid_password.set("false");
                                 } else {
-                                    valid_password.set("false");
+                                    invalid_password.set("true");
                                 }
                             }
                         />
