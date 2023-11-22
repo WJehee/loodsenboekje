@@ -81,7 +81,7 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::READER | UserType::INACTIVE => {
-            println!("Invalid permission to delete entry for {} ({})", user.name, user.id);
+            println!("{user} does not have permission to delete entry {id}");
             Err(ServerFnError::ServerError("Invalid permission".into()))
         }
         UserType::ADMIN | UserType::WRITER => {
@@ -89,7 +89,7 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
             sqlx::query!("DELETE FROM entries WHERE id = ?", id)
                 .execute(&db)
                 .await?;
-            println!("{} ({}) deleted entry with id: {id}", user.name, user.id);
+            println!("{user} deleted entry with id: {id}");
             Ok(())
         },
     }

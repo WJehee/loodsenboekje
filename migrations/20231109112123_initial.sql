@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS user_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     user_id INTEGER NOT NULL,
     entry_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (entry_id) REFERENCES entries (id)
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (entry_id) REFERENCES entries (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS users (
