@@ -6,7 +6,7 @@ use crate::{
     components::{MyInput, SearchBar, AddEntryForm},
     model::{
         entry::AddEntry,
-        user::{Register, validate_username, validate_password}
+        user::{Register, validate_username, validate_password, get_all_users}
     },
     auth::{Login, Logout, current_user}
 };
@@ -104,11 +104,23 @@ fn LoginPage(login: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
                 <div class="grid">
                     <label for="username">
                         Gebruikersnaam
-                        <input type="text" name="username" placeholder="Gebruikersnaam" required/>
+                        <MyInput
+                            input_type="text"
+                            input_name="username"
+                            input_placeholder="Gebruikersnaam"
+                            error_msg="Alleen letters toegestaan"
+                            validation_function=validate_username
+                        />
                     </label>
                     <label for="password">
                         Wachtwoord
-                        <input type="password" name="password" placeholder="Wachtwoord" required/>
+                        <MyInput
+                            input_type="password"
+                            input_name="password"
+                            input_placeholder=""
+                            error_msg="Wachtwoord moet minimaal 8 karakters bevatten"
+                            validation_function=validate_password
+                        />
                     </label>
                 </div>
                 <button type="submit">Inloggen</button>
@@ -157,8 +169,24 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
 
 #[component]
 fn LeaderBoard() -> impl IntoView {
+    let users = create_resource(|| (), |_| async move { get_all_users().await });
     view!{
         <h1>Leaderboard!</h1>
+         <Transition>
+            {move || users.get().map(|users| match users{
+                // TODO: display error more nicely
+                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
+                Ok(users) => view! {
+                    <For
+                        each=move || users.clone()
+                        key=|user| user.id
+                        let:user
+                    >
+                        <h2>{user.name}</h2>
+                    </For>
+                }.into_view()
+            })}
+        </Transition>
     }
 }
 

@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_router::*;
 use chrono::Datelike;
 
-use crate::model::entry::{Entry, AddEntry, get_entries, validate_who, DeleteEntry};
+use crate::model::{entry::{Entry, AddEntry, get_entries, validate_who, DeleteEntry}, user::get_all_users};
 
 #[component]
 pub fn AddEntryForm(
@@ -11,6 +11,7 @@ pub fn AddEntryForm(
     view! {
         <details>
             <summary role="button" class="outline">Voeg een biertje toe</summary>
+            <UserDataList/>
             <ActionForm action=add_entry>
                 <label for="how">
                     Hoe/wat
@@ -22,8 +23,10 @@ pub fn AddEntryForm(
                         input_type="text"
                         input_name="who"
                         input_placeholder="Opa Dorus"
-                        validation_function=validate_who
                         error_msg="Alleen letters, kommas en spaties toegestaan"
+                        validation_function=validate_who
+                        // This only works for the first entry, which is fine for now
+                        input_list="userdata"
                     />
                 </label>
                 <button type="submit" role="button">Voeg toe</button>
@@ -39,6 +42,8 @@ pub fn MyInput(
     input_placeholder: &'static str,
     error_msg: &'static str,
     validation_function: fn(&str) -> bool,
+    #[prop(optional)]
+    input_list: &'static str,
 ) -> impl IntoView {
     let invalid = create_rw_signal("");
     let error = create_rw_signal("");
@@ -49,6 +54,8 @@ pub fn MyInput(
             placeholder=input_placeholder
             aria-invalid=invalid
             required
+            autocomplete="off"
+            list=input_list
             on:input=move |ev| {
                 let data = event_target_value(&ev);
                 if validation_function(&data) {
@@ -61,7 +68,30 @@ pub fn MyInput(
             }/>
         <small>{error}</small>
     }
-} 
+}
+
+#[component]
+fn UserDataList() -> impl IntoView {
+    let users = create_resource(|| (), |_| async move { get_all_users().await });
+    view!{
+         <Transition>
+            {move || users.get().map(|users| match users{
+                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
+                Ok(users) => view! {
+                    <datalist id="userdata">
+                    <For
+                        each=move || users.clone()
+                        key=|user| user.id
+                        let:user
+                    >
+                        <option>{user.name}</option>
+                    </For>
+                    </datalist>
+                }.into_view()
+            })}
+        </Transition>
+    }
+}
 
 #[component]
 pub fn SearchBar(

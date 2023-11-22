@@ -35,6 +35,7 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
                 return Err(ServerFnError::ServerError("Invalid who".into()))
             }
 
+            // TODO: make this a transaction
             let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
                 .execute(&db)
                 .await?

@@ -165,3 +165,26 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
     }
 }
 
+#[server]
+pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
+    let user = user()?;
+    println!("get all users");
+    match user.user_type {
+        UserType::INACTIVE => {
+            println!("Inactive user {user} tried to access all users");
+            Err(ServerFnError::ServerError("No permission to view all users".into()))
+        },
+        _ => {
+            let db = db().await;
+            let result = sqlx::query_as!(SqlUser, "SELECT * FROM users")
+                .fetch_all(&db)
+                .await?;
+            Ok(result
+               .into_iter()
+               .map(|sqluser| sqluser.into())
+               .collect()
+            )
+        }
+    }
+}
+
