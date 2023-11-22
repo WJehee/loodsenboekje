@@ -16,6 +16,10 @@ pub struct Entry {
     pub created: chrono::NaiveDateTime,
 }
 
+pub fn validate_who(who: &str) -> bool {
+    who.chars().all(|c| c.is_alphabetic() | c.is_whitespace() | (c == ','))
+}
+
 #[server(AddEntry)]
 pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
     let user = user()?;
@@ -26,6 +30,10 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
         }
         UserType::ADMIN | UserType::WRITER => {
             let db = db().await;
+
+            if !validate_who(&who) {
+                return Err(ServerFnError::ServerError("Invalid who".into()))
+            }
 
             let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
                 .execute(&db)

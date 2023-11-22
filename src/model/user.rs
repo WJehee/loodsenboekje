@@ -65,6 +65,10 @@ pub fn validate_password(passwd: &str) -> bool {
     passwd.len() >= MIN_PASSWORD_LENGTH
 }
 
+pub fn validate_username(username: &str) -> bool {
+    username.chars().all(char::is_alphabetic)
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum UserType {
     READER,
@@ -107,6 +111,9 @@ pub async fn create_user(username: String, password: String, creation_password: 
 
     if !validate_password(&password) {
         return Err(ServerFnError::ServerError(format!("Password is too short, requires at least {MIN_PASSWORD_LENGTH} characters")))
+    }
+    if !validate_username(&username) {
+        return Err(ServerFnError::ServerError(format!("Invalid username, use only alphabetical characters")))
     }
 
     let db = db().await;
