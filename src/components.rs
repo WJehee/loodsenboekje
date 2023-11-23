@@ -15,7 +15,7 @@ pub fn AddEntryForm(
             <ActionForm action=add_entry>
                 <label for="how">
                     Hoe/wat
-                    <input type="text" name="how"/>
+                    <input type="text" name="how" placeholder="Krat bier"/>
                 </label>
                 <label for="who">
                     Wie (indien meer dan 1, voeg kommas toe)
@@ -132,7 +132,11 @@ fn AllEntries(
         <Transition>
             {move || entry_resource.get().map(|entries| match entries {
                 // TODO: display error more nicely
-                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
+                Err(e) => {
+                    view! {
+                        <span>{e.to_string()}</span>
+                    }.into_view()
+                },
                 Ok(entries) => view! {
                     <kbd>{ entries.len() } resultaten</kbd>
                     <table>
@@ -166,6 +170,8 @@ fn EntryRow(
     entry: Entry,
     delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
 ) -> impl IntoView {
+    let can_write= use_context::<ReadSignal<bool>>()
+        .expect("to have can_write read signal set");
     view! {
         <tr>
             <td scope="row">{ entry.id }</td>
@@ -179,12 +185,17 @@ fn EntryRow(
                 &entry.created.year(),
             )}</td>
             <td>
-                <ActionForm action=delete_entry>
-                    <input type="hidden" name="id" value={entry.id}/>
-                    <button type="submit" name="submit" class="outline secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
-                </ActionForm>
+                { move || match can_write() {
+                    true => view! {
+                        <ActionForm action=delete_entry>
+                            <input type="hidden" name="id" value={entry.id}/>
+                            <button type="submit" name="submit" class="outline secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </ActionForm>
+                    },
+                    false => ().into_view(),
+                }}
             </td>
         </tr>
     }

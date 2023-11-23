@@ -6,7 +6,7 @@ use crate::{
     components::{MyInput, SearchBar, AddEntryForm},
     model::{
         entry::AddEntry,
-        user::{Register, validate_username, validate_password, get_all_users}
+        user::{Register, validate_username, validate_password, get_all_users, UserType}
     },
     auth::{Login, Logout, current_user}
 };
@@ -17,7 +17,10 @@ pub fn App() -> impl IntoView {
     let register = create_server_action::<Register>();
     let logout = create_server_action::<Logout>();
     let add_entry = create_server_action::<AddEntry>();
-    
+   
+    let (user_is_writer, set_user_is_writer) = create_signal(false);
+    provide_context(user_is_writer);
+
     let user = create_resource(
         move || {(
             login.version().get(),
@@ -44,9 +47,14 @@ pub fn App() -> impl IntoView {
                     fallback=move || view!{<span>Loading...</span>}
                 >
                 { move || user.get().map(|user| match user {
-                    Ok(Some(user)) => view! {
+                    Ok(Some(user)) =>{
+                        match user.user_type {
+                            UserType::WRITER | UserType::ADMIN => set_user_is_writer.set(true),
+                            _ => set_user_is_writer.set(false),
+                        };
+                        view! {
                         <ul>
-                            <li>Ingelogd als {user}</li>
+                            <li>Ingelogd als {user.name}</li>
                         </ul>
                         <ul>
                             <li><a href="/leaderboard">Leaderboard</a></li>
@@ -56,8 +64,10 @@ pub fn App() -> impl IntoView {
                                 </ActionForm>
                             </li>
                         </ul>
-                    }.into_view(),
-                    _ => view! {
+                    }}.into_view(),
+                    _ => {
+                        set_user_is_writer.set(false);
+                        view! {
                         <ul>
                             <li>Niet ingelogd</li>
                         </ul>
@@ -65,7 +75,7 @@ pub fn App() -> impl IntoView {
                             <li><a href="/login">Login</a></li>
                             <li><a href="/register">Nieuw account</a></li>
                         </ul>
-                    }.into_view()
+                    }}.into_view()
                 })}
             </Transition>
             </nav>
@@ -73,7 +83,10 @@ pub fn App() -> impl IntoView {
                 <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                     <Routes>
                         <Route path="/" view=move || view! {
-                            <AddEntryForm add_entry/>
+                            {move || match user_is_writer() {
+                               true => view! { <AddEntryForm add_entry/> },
+                               false => ().into_view(),
+                            }}
                             <SearchBar add_entry/>
                         }/>
                         <Route path="/login" view=move || view! {

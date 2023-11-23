@@ -2,6 +2,7 @@ pub mod app;
 pub mod components;
 pub mod model;
 pub mod auth;
+pub mod errors;
 
 use cfg_if::cfg_if;
 

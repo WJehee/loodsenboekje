@@ -4,6 +4,7 @@ pub mod model;
 pub mod app;
 pub mod components;
 pub mod auth;
+pub mod errors;
 
 cfg_if! { if #[cfg(feature = "hydrate")] {
     use leptos::*;
