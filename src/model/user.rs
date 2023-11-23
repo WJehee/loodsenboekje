@@ -168,7 +168,6 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
 #[server]
 pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
     let user = user()?;
-    println!("get all users");
     match user.user_type {
         UserType::INACTIVE => {
             println!("Inactive user {user} tried to access all users");

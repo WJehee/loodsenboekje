@@ -1,11 +1,13 @@
 use leptos::{ServerFnError, server};
 use cfg_if::cfg_if;
 
+use crate::model::user::User;
+
 pub const USER_STRING: &str = "user";
 
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use super::model::user::{User, get_user_by_username};
+        use super::model::user::get_user_by_username;
         use axum_session::{Session, SessionNullPool};
         use leptos::use_context;
 
@@ -58,11 +60,11 @@ async fn logout() -> Result<(), ServerFnError> {
 }
 
 #[server(CurrentUser)]
-pub async fn current_user() -> Result<Option<String>, ServerFnError> {
+pub async fn current_user() -> Result<Option<User>, ServerFnError> {
     match user() {
         Ok(user) => {
             println!("current user: {user}");
-            Ok(Some(user.name))
+            Ok(Some(user))
         },
         Err(_) => {
             println!("not logged in");
