@@ -25,7 +25,7 @@ pub fn AddEntryForm(
                         input_placeholder="Opa Dorus"
                         error_msg="Alleen letters, kommas en spaties toegestaan"
                         validation_function=validate_who
-                        // This only works for the first entry, which is fine for now
+                        // This (autocomplete) only works for the first entry, which is fine for now
                         input_list="userdata"
                     />
                 </label>
@@ -102,7 +102,7 @@ pub fn SearchBar(
 
     let delete_entry = create_server_action::<DeleteEntry>();
 
-    let entry_resource = create_resource(
+    let entries = create_resource(
         move || {(
             search(),
             add_entry.version().get(),
@@ -119,18 +119,18 @@ pub fn SearchBar(
                 oninput="this.form.requestSubmit()"
             />
         </Form>
-        <AllEntries delete_entry entry_resource/>
+        <AllEntries delete_entry entries/>
     }
 }
 
 #[component]
 fn AllEntries(
     delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
-    entry_resource: Resource<(String, usize, usize), Result<Vec<Entry>, ServerFnError>>
+    entries: Resource<(String, usize, usize), Result<Vec<Entry>, ServerFnError>>
 ) -> impl IntoView {
     view! {
         <Transition>
-            {move || entry_resource.get().map(|entries| match entries {
+            {move || entries.get().map(|entries| match entries {
                 Err(e) => {
                     let e = match e {
                         ServerFnError::ServerError(e) => e.to_string(),

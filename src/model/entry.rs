@@ -7,6 +7,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     use crate::auth::user;
     use sqlx::FromRow;
     use crate::errors::Error;
+    use log::info;
 }}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -26,13 +27,14 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::Reader | UserType::Inactive=> {
-            println!("{user} does not have permission to add a new entry");
+            info!("{user} does not have permission to add a new entry");
             Err(Error::NoPermission.into())
         }
         UserType::Admin | UserType::Writer => {
             let db = db().await;
 
             if !validate_who(&who) {
+                info!("who field is invalid: {who}");
                 return Err(Error::InvalidInput.into())
             }
 
@@ -41,7 +43,7 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
                 .execute(&db)
                 .await?
                 .last_insert_rowid();
-            println!("{user} added entry: {how}");
+            info!("{user} added entry: {how}");
 
             for maybe_username in who.split(",") {
                 let maybe_username = maybe_username.trim();
@@ -56,7 +58,7 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
                 sqlx::query!("INSERT INTO user_entries (user_id, entry_id) VALUES (?, ?)", entry_user.id, id)
                     .execute(&db)
                     .await?;
-                println!("added {} as author for entry", entry_user.username);
+                info!("added {} as author for entry", entry_user.username);
             }
             Ok(id)
         },
@@ -91,7 +93,7 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::Reader | UserType::Inactive => {
-            println!("{user} does not have permission to delete entry {id}");
+            info!("{user} does not have permission to delete entry {id}");
             Err(Error::NoPermission.into())
         }
         UserType::Admin | UserType::Writer => {
@@ -99,7 +101,7 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
             sqlx::query!("DELETE FROM entries WHERE id = ?", id)
                 .execute(&db)
                 .await?;
-            println!("{user} deleted entry with id: {id}");
+            info!("{user} deleted entry with id: {id}");
             Ok(())
         },
     }

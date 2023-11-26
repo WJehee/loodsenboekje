@@ -8,6 +8,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     use sqlx::FromRow;
     use crate::auth::user;
     use crate::errors::Error;
+    use log::info;
 
     #[derive(FromRow)]
     pub struct SqlUser {
@@ -55,7 +56,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             .execute(&db)
             .await?
             .last_insert_rowid();
-        println!("Created inactive user: '{username}', with id: '{id}'");
+        info!("Created inactive user: '{username}', with id: '{id}'");
         Ok(id)
     }
 }}
@@ -105,7 +106,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
         p if p == write_password => UserType::Writer,
         p if p == admin_password => UserType::Admin,
         _ => {
-            println!("Invalid account creation password");
+            info!("Invalid account creation password");
             return Err(Error::InvalidInput.into())
         },
     };
@@ -127,13 +128,13 @@ pub async fn create_user(username: String, password: String, creation_password: 
             .execute(&db)
             .await?
             .last_insert_rowid();
-        println!("User: {username}, with id: {id} activated their account");
+        info!("User: {username}, with id: {id} activated their account");
     } else {
         let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, hashed_password, user_type)
             .execute(&db)
             .await?
             .last_insert_rowid();
-        println!("Created user: '{username}', with id: '{id}'");
+        info!("Created user: '{username}', with id: '{id}'");
     }
 
     leptos_axum::redirect("/login");
@@ -156,11 +157,11 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
             sqlx::query!("DELETE FROM users WHERE id = ?", id)
                 .execute(&db)
                 .await?;
-            println!("{user}, deleted user with id: {id}");
+            info!("{user}, deleted user with id: {id}");
             Ok(())
         },
         (_, id) => {
-            println!("{user} tried to delete account with id: {id}");
+            info!("{user} tried to delete account with id: {id}");
             Err(Error::NoPermission.into())
         }
     }
@@ -171,7 +172,7 @@ pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::Inactive => {
-            println!("Inactive user {user} tried to access all users");
+            info!("Inactive user {user} tried to access all users");
             Err(Error::NoPermission.into())
         },
         _ => {
