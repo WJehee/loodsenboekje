@@ -133,8 +133,12 @@ fn AllEntries(
             {move || entry_resource.get().map(|entries| match entries {
                 // TODO: display error more nicely
                 Err(e) => {
+                    let e = match e {
+                        ServerFnError::ServerError(e) => e.to_string(),
+                        _ => "Server error".to_string(),
+                    };
                     view! {
-                        <span>{e.to_string()}</span>
+                        <span>{e}</span>
                     }.into_view()
                 },
                 Ok(entries) => view! {

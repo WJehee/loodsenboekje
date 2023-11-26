@@ -49,7 +49,7 @@ pub fn App() -> impl IntoView {
                 { move || user.get().map(|user| match user {
                     Ok(Some(user)) =>{
                         match user.user_type {
-                            UserType::WRITER | UserType::ADMIN => set_user_is_writer.set(true),
+                            UserType::Writer | UserType::Admin => set_user_is_writer.set(true),
                             _ => set_user_is_writer.set(false),
                         };
                         view! {

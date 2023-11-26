@@ -7,6 +7,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     use super::db;
     use sqlx::FromRow;
     use crate::auth::user;
+    use crate::errors::Error;
 
     #[derive(FromRow)]
     pub struct SqlUser {
@@ -22,11 +23,11 @@ cfg_if! { if #[cfg(feature = "ssr")] {
                 id: sqluser.id,
                 name: sqluser.username,
                 user_type: match sqluser.user_type {
-                    0 => UserType::READER,
-                    1 => UserType::WRITER,
-                    2 => UserType::ADMIN,
+                    0 => UserType::Reader,
+                    1 => UserType::Writer,
+                    2 => UserType::Admin,
                     //  any other (should not happen) is set to lowest priviledges
-                    _ => UserType::INACTIVE,
+                    _ => UserType::Inactive,
                 },
             }
         }
@@ -50,7 +51,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
         let db = db().await;
         let username = username.to_ascii_lowercase();
         let empty_password = String::new();
-        let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::INACTIVE as i64)
+        let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::Inactive as i64)
             .execute(&db)
             .await?
             .last_insert_rowid();
@@ -71,10 +72,10 @@ pub fn validate_username(username: &str) -> bool {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum UserType {
-    READER,
-    WRITER,
-    ADMIN,
-    INACTIVE,
+    Reader,
+    Writer,
+    Admin,
+    Inactive,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -100,20 +101,20 @@ pub async fn create_user(username: String, password: String, creation_password: 
     let admin_password = env::var("ADMIN_PASSWORD").expect("ADMIN_PASSWORD to be set");
 
     let user_type = match creation_password {
-        p if p == read_password => Ok(UserType::READER),
-        p if p == write_password => Ok(UserType::WRITER),
-        p if p == admin_password => Ok(UserType::ADMIN),
+        p if p == read_password => UserType::Reader,
+        p if p == write_password => UserType::Writer,
+        p if p == admin_password => UserType::Admin,
         _ => {
             println!("Invalid account creation password");
-            Err(ServerFnError::ServerError("Invalid account creation password".into()))
+            return Err(Error::InvalidInput.into())
         },
-    }?;
+    };
 
     if !validate_password(&password) {
-        return Err(ServerFnError::ServerError(format!("Password is too short, requires at least {MIN_PASSWORD_LENGTH} characters")))
+        return Err(Error::InvalidInput.into())
     }
     if !validate_username(&username) {
-        return Err(ServerFnError::ServerError(format!("Invalid username, use only alphabetical characters")))
+        return Err(Error::InvalidInput.into())
     }
 
     let db = db().await;
@@ -150,7 +151,7 @@ pub async fn get_user(id: i64) -> Result<User, ServerFnError> {
 pub async fn delete(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match (&user.user_type, id) {
-        (UserType::ADMIN, id) |(_, id) if id == id => {
+        (UserType::Admin, id) |(_, id) if id == id => {
             let db = db().await;
             sqlx::query!("DELETE FROM users WHERE id = ?", id)
                 .execute(&db)
@@ -160,7 +161,7 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
         },
         (_, id) => {
             println!("{user} tried to delete account with id: {id}");
-            Err(ServerFnError::ServerError("No permission to delete this account".into()))
+            Err(Error::NoPermission.into())
         }
     }
 }
@@ -169,9 +170,9 @@ pub async fn delete(id: i64) -> Result<(), ServerFnError> {
 pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::INACTIVE => {
+        UserType::Inactive => {
             println!("Inactive user {user} tried to access all users");
-            Err(ServerFnError::ServerError("No permission to view all users".into()))
+            Err(Error::NoPermission.into())
         },
         _ => {
             let db = db().await;
