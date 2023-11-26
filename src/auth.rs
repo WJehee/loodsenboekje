@@ -10,18 +10,25 @@ cfg_if! {
         use super::model::user::get_user_by_username;
         use axum_session::{Session, SessionNullPool};
         use leptos::use_context;
+        use crate::errors::Error;
 
         pub fn user() -> Result<User, ServerFnError> {
             let session = session()?;
             match session.get::<User>(USER_STRING) {
                 Some(user) => Ok(user),
-                None => Err(ServerFnError::ServerError("failed to extract user".into()))
+                None => {
+                    eprintln!("Failed to extract user");
+                    Err(Error::NotLoggedIn.into())
+                }
             }
         }
 
         pub fn session() -> Result<Session<SessionNullPool>, ServerFnError> {
             use_context::<Session<SessionNullPool>>()
-                .ok_or_else(|| ServerFnError::ServerError("Session missing.".into()))
+                .ok_or_else(|| {
+                    eprintln!("Failed to get session");
+                    Error::NotLoggedIn.into()
+                })
         }
     }
 }
@@ -43,7 +50,7 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
             leptos_axum::redirect("/");
             Ok(())
         },
-        false => Err(ServerFnError::ServerError("Password does not match".to_string()))
+        false => Err(Error::InvalidInput.into())
     }
 }
 

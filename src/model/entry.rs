@@ -6,6 +6,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     use super::{db, user::{UserType, get_user_by_username, get_user_by_id, create_inactive_user}};
     use crate::auth::user;
     use sqlx::FromRow;
+    use crate::errors::Error;
 }}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -24,15 +25,15 @@ pub fn validate_who(who: &str) -> bool {
 pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::READER | UserType::INACTIVE => {
+        UserType::Reader | UserType::Inactive=> {
             println!("{user} does not have permission to add a new entry");
-            Err(ServerFnError::ServerError("Invalid permission".into()))
+            Err(Error::NoPermission.into())
         }
-        UserType::ADMIN | UserType::WRITER => {
+        UserType::Admin | UserType::Writer => {
             let db = db().await;
 
             if !validate_who(&who) {
-                return Err(ServerFnError::ServerError("Invalid who".into()))
+                return Err(Error::InvalidInput.into())
             }
 
             // TODO: make this a transaction
@@ -89,11 +90,11 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::READER | UserType::INACTIVE => {
+        UserType::Reader | UserType::Inactive => {
             println!("{user} does not have permission to delete entry {id}");
-            Err(ServerFnError::ServerError("Invalid permission".into()))
+            Err(Error::NoPermission.into())
         }
-        UserType::ADMIN | UserType::WRITER => {
+        UserType::Admin | UserType::Writer => {
             let db = db().await;
             sqlx::query!("DELETE FROM entries WHERE id = ?", id)
                 .execute(&db)
