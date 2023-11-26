@@ -1680,6 +1680,7 @@ dependencies = [
  "leptos_axum",
  "leptos_meta",
  "leptos_router",
+ "log",
  "serde",
  "serde_json",
  "serde_with",

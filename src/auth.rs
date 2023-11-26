@@ -11,13 +11,14 @@ cfg_if! {
         use axum_session::{Session, SessionNullPool};
         use leptos::use_context;
         use crate::errors::Error;
+        use log::{info, warn};
 
         pub fn user() -> Result<User, ServerFnError> {
             let session = session()?;
             match session.get::<User>(USER_STRING) {
                 Some(user) => Ok(user),
                 None => {
-                    eprintln!("Failed to extract user");
+                    warn!("Failed to extract user but session was available");
                     Err(Error::NotLoggedIn.into())
                 }
             }
@@ -26,7 +27,7 @@ cfg_if! {
         pub fn session() -> Result<Session<SessionNullPool>, ServerFnError> {
             use_context::<Session<SessionNullPool>>()
                 .ok_or_else(|| {
-                    eprintln!("Failed to get session");
+                    info!("Failed to get session, user not logged in");
                     Error::NotLoggedIn.into()
                 })
         }
@@ -42,7 +43,7 @@ async fn login(username: String, password: String) -> Result<(), ServerFnError> 
     match verify(password, &sqluser.password)? {
         true => {
             let user: User = sqluser.into();
-            println!("{user} logged in");
+            info!("{user} logged in");
             let session= session()?;
             session.set_store(true);
             session.set(USER_STRING, user);
@@ -59,7 +60,7 @@ async fn logout() -> Result<(), ServerFnError> {
     let session = session()?;
     if let Some(user) = session.get::<User>(USER_STRING) {
         session.destroy();
-        println!("{user} logged out");
+        info!("{user} logged out");
     };
 
     leptos_axum::redirect("/login");
@@ -70,11 +71,11 @@ async fn logout() -> Result<(), ServerFnError> {
 pub async fn current_user() -> Result<Option<User>, ServerFnError> {
     match user() {
         Ok(user) => {
-            println!("current user: {user}");
+            info!("current user: {user}");
             Ok(Some(user))
         },
         Err(_) => {
-            println!("not logged in");
+            info!("not logged in");
             Ok(None)
         }
     }

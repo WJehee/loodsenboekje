@@ -25,6 +25,7 @@ wasm-bindgen = "=0.2.87"
 axum_session = { version = "0.8.0", features = ["sqlite-rustls"], optional = true }
 bcrypt = "0.15.0"
 dotenvy = "0.15.7"
+log = "0.4.20"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
