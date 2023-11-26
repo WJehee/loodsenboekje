@@ -187,8 +187,13 @@ fn LeaderBoard() -> impl IntoView {
         <h1>Leaderboard!</h1>
          <Transition>
             {move || users.get().map(|users| match users{
-                // TODO: display error more nicely
-                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
+                Err(e) => {
+                    let e = match e {
+                        ServerFnError::ServerError(e) => e.to_string(),
+                        _ => "Server error".to_string(),
+                    };
+                    view! {<span>{e.to_string()}</span>}.into_view()
+                },
                 Ok(users) => view! {
                     <For
                         each=move || users.clone()

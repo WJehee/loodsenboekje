@@ -131,7 +131,6 @@ fn AllEntries(
     view! {
         <Transition>
             {move || entry_resource.get().map(|entries| match entries {
-                // TODO: display error more nicely
                 Err(e) => {
                     let e = match e {
                         ServerFnError::ServerError(e) => e.to_string(),
