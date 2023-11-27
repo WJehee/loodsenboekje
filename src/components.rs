@@ -2,7 +2,7 @@ use leptos::*;
 use leptos_router::*;
 use chrono::Datelike;
 
-use crate::model::{entry::{Entry, AddEntry, get_entries, validate_who, DeleteEntry}, user::get_all_users};
+use crate::model::{entry::{Entry, AddEntry, get_entries, validate_who, DeleteEntry}, user::{get_all_users, UserType}};
 
 #[component]
 pub fn AddEntryForm(
@@ -173,7 +173,7 @@ fn EntryRow(
     entry: Entry,
     delete_entry: Action<DeleteEntry, Result<(), ServerFnError>>,
 ) -> impl IntoView {
-    let can_write= use_context::<ReadSignal<bool>>()
+    let user_type = use_context::<RwSignal<UserType>>()
         .expect("to have can_write read signal set");
     view! {
         <tr>
@@ -188,8 +188,8 @@ fn EntryRow(
                 &entry.created.year(),
             )}</td>
             <td>
-                { move || match can_write() {
-                    true => view! {
+                { move || match user_type.get() {
+                    UserType::Writer | UserType::Admin => view! {
                         <ActionForm action=delete_entry>
                             <input type="hidden" name="id" value={entry.id}/>
                             <button type="submit" name="submit" class="outline secondary">
@@ -197,7 +197,7 @@ fn EntryRow(
                             </button>
                         </ActionForm>
                     },
-                    false => ().into_view(),
+                    UserType::Reader | UserType::Inactive => ().into_view(),
                 }}
             </td>
         </tr>
