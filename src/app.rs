@@ -18,8 +18,8 @@ pub fn App() -> impl IntoView {
     let logout = create_server_action::<Logout>();
     let add_entry = create_server_action::<AddEntry>();
    
-    let (user_is_writer, set_user_is_writer) = create_signal(false);
-    provide_context(user_is_writer);
+    let user_type = create_rw_signal(UserType::Inactive);
+    provide_context(user_type);
 
     let user = create_resource(
         move || {(
@@ -47,11 +47,8 @@ pub fn App() -> impl IntoView {
                     fallback=move || view!{<span>Loading...</span>}
                 >
                 { move || user.get().map(|user| match user {
-                    Ok(Some(user)) =>{
-                        match user.user_type {
-                            UserType::Writer | UserType::Admin => set_user_is_writer.set(true),
-                            _ => set_user_is_writer.set(false),
-                        };
+                    Ok(Some(user)) => {
+                        user_type.set(user.user_type);
                         view! {
                         <ul>
                             <li>Ingelogd als {user.name}</li>
@@ -66,7 +63,7 @@ pub fn App() -> impl IntoView {
                         </ul>
                     }}.into_view(),
                     _ => {
-                        set_user_is_writer.set(false);
+                        user_type.set(UserType::Inactive);
                         view! {
                         <ul>
                             <li>Niet ingelogd</li>
@@ -83,9 +80,9 @@ pub fn App() -> impl IntoView {
                 <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                     <Routes>
                         <Route path="/" view=move || view! {
-                            {move || match user_is_writer() {
-                               true => view! { <AddEntryForm add_entry/> },
-                               false => ().into_view(),
+                            {move || match user_type.get() {
+                               UserType::Writer | UserType::Admin => view! { <AddEntryForm add_entry/> },
+                               UserType::Reader | UserType::Inactive => ().into_view(),
                             }}
                             <SearchBar add_entry/>
                         }/>
