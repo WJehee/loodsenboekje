@@ -5,7 +5,7 @@ use std::fmt;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
     use super::db;
-    use sqlx::FromRow;
+    use sqlx::{FromRow, Transaction, Sqlite};
     use crate::auth::user;
     use crate::errors::Error;
     use log::info;
@@ -48,12 +48,17 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             .await
     }
 
-    pub async fn create_inactive_user(username: &str) -> Result<i64, ServerFnError> {
-        let db = db().await;
+    pub async fn get_user_by_id_tx(transaction: &mut Transaction<'_, Sqlite>, id: i64) -> Result<SqlUser, sqlx::Error> {
+        sqlx::query_as!(SqlUser, "SELECT * FROM users WHERE id = ?", id)
+            .fetch_one(transaction.as_mut())
+            .await
+    }
+
+    pub async fn create_inactive_user(transaction: &mut Transaction<'_, Sqlite>, username: &str) -> Result<i64, ServerFnError> {
         let username = username.to_ascii_lowercase();
         let empty_password = String::new();
         let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::Inactive as i64)
-            .execute(&db)
+            .execute(transaction.as_mut())
             .await?
             .last_insert_rowid();
         info!("Created inactive user: '{username}', with id: '{id}'");

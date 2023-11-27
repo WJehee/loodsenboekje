@@ -6,7 +6,7 @@ use crate::{
     components::{MyInput, SearchBar, AddEntryForm},
     model::{
         entry::AddEntry,
-        user::{Register, validate_username, validate_password, get_all_users, UserType}
+        user::{Register, validate_username, validate_password, get_all_users, UserType, User}
     },
     auth::{Login, Logout, current_user}
 };
@@ -16,11 +16,7 @@ pub fn App() -> impl IntoView {
     let login = create_server_action::<Login>();
     let register = create_server_action::<Register>();
     let logout = create_server_action::<Logout>();
-    let add_entry = create_server_action::<AddEntry>();
    
-    let user_type = create_rw_signal(UserType::Inactive);
-    provide_context(user_type);
-
     let user = create_resource(
         move || {(
             login.version().get(),
@@ -29,6 +25,7 @@ pub fn App() -> impl IntoView {
         )},
         move |_| current_user(),
     );
+    provide_context(user);
     provide_meta_context();
 
     view! {
@@ -48,7 +45,6 @@ pub fn App() -> impl IntoView {
                 >
                 { move || user.get().map(|user| match user {
                     Ok(Some(user)) => {
-                        user_type.set(user.user_type);
                         view! {
                         <ul>
                             <li>Ingelogd als {user.name}</li>
@@ -63,7 +59,6 @@ pub fn App() -> impl IntoView {
                         </ul>
                     }}.into_view(),
                     _ => {
-                        user_type.set(UserType::Inactive);
                         view! {
                         <ul>
                             <li>Niet ingelogd</li>
@@ -79,13 +74,7 @@ pub fn App() -> impl IntoView {
             <main>
                 <Router fallback=|| view! { <h1>Router error</h1> }.into_view()>
                     <Routes>
-                        <Route path="/" view=move || view! {
-                            {move || match user_type.get() {
-                               UserType::Writer | UserType::Admin => view! { <AddEntryForm add_entry/> },
-                               UserType::Reader | UserType::Inactive => ().into_view(),
-                            }}
-                            <SearchBar add_entry/>
-                        }/>
+                        <Route path="/" view=MainPage/>
                         <Route path="/login" view=move || view! {
                             <LoginPage login/>
                         }/>
@@ -101,6 +90,32 @@ pub fn App() -> impl IntoView {
             <hr/>
             View the <a href="https://github.com/WJehee/loodsenboekje.com">Source code</a>
         </footer>
+    }
+}
+
+#[component]
+fn MainPage() -> impl IntoView {
+    let add_entry = create_server_action::<AddEntry>();
+    let user = use_context::<Resource<(usize, usize, usize), Result<Option<User>, ServerFnError>>>()
+        .expect("to have user set in context");
+
+    view! {
+        <Transition
+            fallback=move || view!{<span>Loading...</span>}
+        >
+        {move || user.get().map(|user| match user {
+           Ok(Some(user)) => match user.user_type {
+               UserType::Writer | UserType::Admin => view! {
+                   <AddEntryForm add_entry/> 
+                   <SearchBar add_entry/>
+               }.into_view(),
+               UserType::Reader | UserType::Inactive => view!{
+                    <SearchBar add_entry/>
+               }.into_view(),
+           },
+           _ => ().into_view(),
+        })}
+        </Transition>
     }
 }
 

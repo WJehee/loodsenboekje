@@ -3,7 +3,7 @@ use leptos::*;
 use cfg_if::cfg_if;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
-    use super::{db, user::{UserType, get_user_by_username, get_user_by_id, create_inactive_user}};
+    use super::{db, user::{UserType, get_user_by_username, get_user_by_id_tx, create_inactive_user}};
     use crate::auth::user;
     use sqlx::FromRow;
     use crate::errors::Error;
@@ -38,9 +38,9 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
                 return Err(Error::InvalidInput.into())
             }
 
-            // TODO: make this a transaction
+            let mut transaction = db.begin().await?;
             let id = sqlx::query!("INSERT INTO entries (how) VALUES (?)", how)
-                .execute(&db)
+                .execute(transaction.as_mut())
                 .await?
                 .last_insert_rowid();
             info!("{user} added entry: {how}");
@@ -50,16 +50,17 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
                 let entry_user = match get_user_by_username(maybe_username).await {
                     Ok(user) => user,
                     Err(_) => {
-                        let id = create_inactive_user(maybe_username).await?;
-                        get_user_by_id(id).await?
+                        let id = create_inactive_user(&mut transaction, maybe_username).await?;
+                        get_user_by_id_tx(&mut transaction, id).await?
                     },
                 };
 
                 sqlx::query!("INSERT INTO user_entries (user_id, entry_id) VALUES (?, ?)", entry_user.id, id)
-                    .execute(&db)
+                    .execute(transaction.as_mut())
                     .await?;
                 info!("added {} as author for entry", entry_user.username);
             }
+            transaction.commit().await?;
             Ok(id)
         },
     }

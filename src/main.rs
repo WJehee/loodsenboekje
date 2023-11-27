@@ -21,6 +21,7 @@ cfg_if!{
         };
         use leptos::*;
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
+        use simplelog::{LevelFilter, ConfigBuilder, TermLogger, TerminalMode, ColorChoice};
 
         use loodsenboekje::app::*;
 
@@ -60,6 +61,7 @@ cfg_if!{
             env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
             env::var("ADMIN_PASSWORD").expect("Expected ADMIN_PASSWORD to be set");
 
+
             let session_config = SessionConfig::default()
                 .with_table_name("sessions")
                 .with_key(Key::generate())
@@ -81,6 +83,16 @@ cfg_if!{
                 .fallback_service(routes_static(&site_root))
                 .layer(SessionLayer::new(session_store))
                 ;
+            // TODO: change logger to file logger in production
+            let _ = TermLogger::init(
+                LevelFilter::Info,
+                ConfigBuilder::new()
+                    .add_filter_allow("loodsenboekje".to_string())
+                    .build(),
+                TerminalMode::Mixed,
+                ColorChoice::Auto
+            );
+
             axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
         }
     } else {

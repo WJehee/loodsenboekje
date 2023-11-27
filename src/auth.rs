@@ -17,17 +17,14 @@ cfg_if! {
             let session = session()?;
             match session.get::<User>(USER_STRING) {
                 Some(user) => Ok(user),
-                None => {
-                    warn!("Failed to extract user but session was available");
-                    Err(Error::NotLoggedIn.into())
-                }
+                None => Err(Error::NotLoggedIn.into())
             }
         }
 
         pub fn session() -> Result<Session<SessionNullPool>, ServerFnError> {
             use_context::<Session<SessionNullPool>>()
                 .ok_or_else(|| {
-                    info!("Failed to get session, user not logged in");
+                    warn!("Failed to get session...");
                     Error::NotLoggedIn.into()
                 })
         }
