@@ -26,6 +26,7 @@ axum_session = { version = "0.8.0", features = ["sqlite-rustls"], optional = tru
 bcrypt = "0.15.0"
 dotenvy = "0.15.7"
 log = "0.4.20"
+simplelog = "0.12.1"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
