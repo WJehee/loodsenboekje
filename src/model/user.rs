@@ -55,7 +55,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     }
 
     pub async fn create_inactive_user(transaction: &mut Transaction<'_, Sqlite>, username: &str) -> Result<i64, ServerFnError> {
-        let username = username.to_ascii_lowercase();
+        info!("creating inactive user: {username}");
         let empty_password = String::new();
         let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::Inactive as i64)
             .execute(transaction.as_mut())
@@ -63,6 +63,13 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             .last_insert_rowid();
         info!("Created inactive user: '{username}', with id: '{id}'");
         Ok(id)
+    }
+
+    pub fn prepare_username(username: &str) -> String {
+        let mut u = username
+            .trim()
+            .to_ascii_lowercase();
+        u.remove(0).to_uppercase().to_string() + &u
     }
 }}
 
@@ -124,7 +131,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
     }
 
     let db = db().await;
-    let username = username.to_ascii_lowercase();
+    let username = prepare_username(&username); 
     let hashed_password = hash(password, DEFAULT_COST).unwrap();
     let user_type = user_type as i64;
 

@@ -61,7 +61,6 @@ cfg_if!{
             env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
             env::var("ADMIN_PASSWORD").expect("Expected ADMIN_PASSWORD to be set");
 
-
             let session_config = SessionConfig::default()
                 .with_table_name("sessions")
                 .with_key(Key::generate())
