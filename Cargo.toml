@@ -27,6 +27,7 @@ bcrypt = "0.15.0"
 dotenvy = "0.15.7"
 log = "0.4.20"
 simplelog = "0.12.1"
+csv = "1.3.0"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -62,10 +63,15 @@ browserquery = "defaults"
 watch = false
 env = "DEV"
 
+bin-target = "loodsenboekje"
 bin-features = ["ssr"]
 bin-default-features = false
 
 lib-features = ["hydrate"]
 lib-default-features = false
 lib-profile-release = "wasm-release"
+
+[[bin]]
+name = "load_data"
+required-features = ["ssr"]
 

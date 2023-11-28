@@ -7,7 +7,10 @@ pub const USER_STRING: &str = "user";
 
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use super::model::user::get_user_by_username;
+        use crate::model::user::{
+            get_user_by_username,
+            prepare_username,
+        };
         use axum_session::{Session, SessionNullPool};
         use leptos::use_context;
         use crate::errors::Error;
@@ -34,7 +37,8 @@ cfg_if! {
 #[server(Login)]
 async fn login(username: String, password: String) -> Result<(), ServerFnError> { 
     use bcrypt::verify;
-
+    
+    let username = prepare_username(&username);
     let sqluser = get_user_by_username(&username).await?;
 
     match verify(password, &sqluser.password)? {
