@@ -6,7 +6,7 @@ use crate::{
     components::{MyInput, SearchBar, AddEntryForm},
     model::{
         entry::AddEntry,
-        user::{Register, validate_username, validate_password, get_all_users, UserType, User}
+        user::{Register, validate_username, validate_password, UserType, User, user_leaderboard}
     },
     auth::{Login, Logout, current_user}
 };
@@ -194,11 +194,11 @@ fn RegisterPage(register: Action<Register, Result<(), ServerFnError>>) -> impl I
 
 #[component]
 fn LeaderBoard() -> impl IntoView {
-    let users = create_resource(|| (), |_| async move { get_all_users().await });
+    let leaderboard = create_resource(|| (), |_| async move { user_leaderboard().await });
     view!{
-        <h1>Leaderboard!</h1>
+        <h1>Leaderboard</h1>
          <Transition>
-            {move || users.get().map(|users| match users{
+            {move || leaderboard.get().map(|users| match users{
                 Err(e) => {
                     let e = match e {
                         ServerFnError::ServerError(e) => e.to_string(),
@@ -207,13 +207,26 @@ fn LeaderBoard() -> impl IntoView {
                     view! {<span>{e.to_string()}</span>}.into_view()
                 },
                 Ok(users) => view! {
-                    <For
-                        each=move || users.clone()
-                        key=|user| user.id
-                        let:user
-                    >
-                        <h2>{user.name}</h2>
-                    </For>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Naam</td>
+                                <td>Aantal</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <For
+                            each=move || users.clone()
+                            key=|user| user.id
+                            let:user
+                        >
+                            <tr>
+                                <td>{user.name}</td>
+                                <td>{user.count}</td>
+                            </tr>
+                        </For>
+                        </tbody>
+                    </table>
                 }.into_view()
             })}
         </Transition>

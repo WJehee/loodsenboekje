@@ -194,3 +194,33 @@ pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone)]
+pub struct UserAndCount {
+    pub id: i64,
+    pub name: String,
+    pub count: i64,
+}
+
+#[server]
+pub async fn user_leaderboard() -> Result<Vec<UserAndCount>, ServerFnError> {
+    let user = user()?;
+    match user.user_type {
+        UserType::Inactive => {
+            info!("Inactive user {user} tried to access leaderboard");
+            Err(Error::NoPermission.into())
+        },
+        _ => {
+            let db = db().await;
+            let result = sqlx::query_as!(UserAndCount, r#"
+                SELECT users.id, username AS name, COUNT(user_entries.entry_id) as count FROM users
+                JOIN user_entries ON users.id == user_entries.user_id
+                GROUP BY user_entries.user_id
+                ORDER by count DESC
+            "#)
+                .fetch_all(&db)
+                .await?;
+            Ok(result)
+        }
+    }
+}
+
