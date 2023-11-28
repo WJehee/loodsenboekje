@@ -179,8 +179,7 @@ fn EntryRow(
         <tr>
             <td scope="row">{ entry.id }</td>
             <td>{ &entry.how }</td>
-            <td>Opa Dorus</td>
-            // <td>{ &entry.who }</td>
+            <td>{ &entry.who }</td>
             <td>{format!(
                 "{:02}-{:02}-{:04}",
                 &entry.created.day(),

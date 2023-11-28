@@ -15,6 +15,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
 pub struct Entry {
     pub id: i64,
     pub how: String,
+    pub who: String,
     pub created: chrono::NaiveDateTime,
 }
 
@@ -67,25 +68,24 @@ pub async fn add_entry(how: String, who: String) -> Result<i64, ServerFnError> {
 }
 
 #[server]
-pub async fn get_entry(id: i64) -> Result<Entry, ServerFnError> {
-    user()?;
-    let db = db().await;
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entries WHERE id = ?", id)
-        .fetch_one(&db)
-        .await?;
-    Ok(result)
-}
-
-#[server]
 pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
     user()?;
     let db = db().await;
 
     // TODO: check this, pretty sure this is secure, as the sql query is still prepared
     let query = format!("%{query}%");
-    let result = sqlx::query_as!(Entry, "SELECT * FROM entries WHERE how LIKE ?", query)
+    let result = sqlx::query_as!(Entry, r#"
+            SELECT entries.id, created, how, GROUP_CONCAT(username, ", ") AS who
+            FROM entries
+            JOIN user_entries ON entries.id == user_entries.entry_id
+            JOIN users ON users.id == user_id
+            WHERE how LIKE ?
+            GROUP BY how
+            ORDER BY created DESC
+            "#, query)
         .fetch_all(&db)
         .await?;
+
     Ok(result)
 }
 
