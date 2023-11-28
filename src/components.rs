@@ -76,7 +76,7 @@ fn UserDataList() -> impl IntoView {
     view!{
          <Transition>
             {move || users.get().map(|users| match users{
-                Err(e) => view! {<span>{e.to_string()}</span>}.into_view(),
+                Err(_) => view! {<span>Server error</span>}.into_view(),
                 Ok(users) => view! {
                     <datalist id="userdata">
                     <For

@@ -78,7 +78,7 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
             SELECT entries.id, created, how, GROUP_CONCAT(username, ", ") AS who
             FROM entries
             JOIN user_entries ON entries.id == user_entries.entry_id
-            JOIN users ON users.id == user_id
+            JOIN users ON users.id == user_entries.user_id
             WHERE how LIKE ?
             GROUP BY how
             ORDER BY created DESC
