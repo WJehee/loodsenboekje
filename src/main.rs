@@ -82,7 +82,7 @@ cfg_if!{
                 .fallback_service(routes_static(&site_root))
                 .layer(SessionLayer::new(session_store))
                 ;
-            // TODO: change logger to file logger in production
+            // TODO: change logger to file logger in production (on release build)
             let _ = TermLogger::init(
                 LevelFilter::Info,
                 ConfigBuilder::new()
