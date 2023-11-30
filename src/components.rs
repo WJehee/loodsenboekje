@@ -18,12 +18,12 @@ pub fn AddEntryForm(
                     <input type="text" name="how" placeholder="Krat bier"/>
                 </label>
                 <label for="who">
-                    Wie (indien meer dan 1, voeg kommas toe)
+                    Wie (indien meer dan 1, splits de namen met een +)
                     <MyInput 
                         input_type="text"
                         input_name="who"
                         input_placeholder="Opa Dorus"
-                        error_msg="Alleen letters, kommas en spaties toegestaan"
+                        error_msg="Alleen letters, '+' en spaties toegestaan"
                         validation_function=validate_who
                         // This (autocomplete) only works for the first entry, which is fine for now
                         input_list="userdata"

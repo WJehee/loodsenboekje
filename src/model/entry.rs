@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use leptos::*;
 use cfg_if::cfg_if;
 
-const WHO_DELIMITER: char = ',';
+const WHO_DELIMITER: char = '+';
 
 cfg_if! { if #[cfg(feature = "ssr")] {
     use crate::{
@@ -89,7 +89,7 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
     user()?;
     let db = db().await;
     let query = format!("%{query}%");
-    let delim = format!("{WHO_DELIMITER} ");
+    let delim = format!(" {WHO_DELIMITER} ");
     let result = sqlx::query_as!(Entry, r#"
             SELECT entries.id, created, how, GROUP_CONCAT(username, ?) AS who
             FROM entries

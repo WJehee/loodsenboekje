@@ -136,11 +136,10 @@ pub async fn create_user(username: String, password: String, creation_password: 
     let user_type = user_type as i64;
 
     if let Ok(user) = get_user_by_username(&username).await {
-        let id: i64 = sqlx::query!("UPDATE users SET password = ?, user_type = ? WHERE id = ?", hashed_password, user_type, user.id)
+        sqlx::query!("UPDATE users SET password = ?, user_type = ? WHERE id = ?", hashed_password, user_type, user.id)
             .execute(&db)
-            .await?
-            .last_insert_rowid();
-        info!("User: {username}, with id: {id} activated their account");
+            .await?;
+        info!("User: {username}, with id: {} activated their account", user.id);
     } else {
         let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, hashed_password, user_type)
             .execute(&db)
