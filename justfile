@@ -18,8 +18,8 @@ build:
 load:
     cargo run --bin load_data --features="ssr"
 
-# Package for running on server
-package: build init load
+# Deploy to server
+deploy: build init load
     mkdir -p app
     cp target/release/loodsenboekje app/
     cp -r target/site/ app/site/
@@ -30,6 +30,6 @@ package: build init load
     echo "LEPTOS_OUTPUT_NAME=leptos-loodsenboekje LEPTOS_SITE_ROOT=site LEPTOS_SITE_ADDR="0.0.0.0:1744" ./loodsenboekje" >> app/run.sh
     chmod +x app/run.sh
 
-    # scp -r app/ server:./
-    # rm -rf app/
+    scp -r app/ server:./
+    rm -rf app/
 

@@ -8,8 +8,8 @@ Favicon generated with: https://favicon.io/emoji-favicons/
 
 Create a .env file with the following values:
 
-- READER_PASSWORD
-- WRITER_PASSWORD
+- READ_PASSWORD
+- WRITE_PASSWORD
 - ADMIN_PASSWORD
 
 ## Make sure sqlx-cli is installed
@@ -27,5 +27,33 @@ cargo sqlx migrate run
 # Adding a migration
 ```
 cargo sqlx migrate add <name>
+```
+
+# Deploying
+
+Run:
+```
+just deploy
+```
+
+Login in to the server, `cd` into `app/`
+
+Run:
+
+```
+patchelf --print-interpreter /run/current-system/sw/bin/ls
+```
+
+Copy the output and paste it in the following command:
+
+```
+patchelf --set-interpreter OUTPUT loodsenboekje
+```
+
+Set the environment variables
+
+Run the server in the background:
+```
+./run.sh &
 ```
 
