@@ -97,7 +97,7 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
             JOIN users ON users.id == user_entries.user_id
             WHERE how LIKE ?
             GROUP BY how
-            ORDER BY created DESC
+            ORDER BY created DESC, entries.id DESC
             "#, delim, query)
         .fetch_all(&db)
         .await?;
