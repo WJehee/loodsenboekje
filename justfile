@@ -18,18 +18,21 @@ build:
 load:
     cargo run --bin load_data --features="ssr"
 
+# Prepare server for deploy
+prepare: init load
+    cp sqlite.db loodsenboekje/
+    touch loodsenboekje/.env
+
 # Deploy to server
-deploy: build init load
-    mkdir -p app
-    cp target/release/loodsenboekje app/
-    cp -r target/site/ app/site/
+deploy: build 
+    mkdir -p loodsenboekje
+    cp target/release/loodsenboekje loodsenboekje/
+    cp -r target/site/ loodsenboekje/site/
 
-    cp sqlite.db app/
-    touch app/.env
+    echo "LEPTOS_OUTPUT_NAME=leptos-loodsenboekje LEPTOS_SITE_ROOT=site LEPTOS_SITE_ADDR="0.0.0.0:1744" ./loodsenboekje" >> loodsenboekje/run.sh
+    chmod +x loodsenboekje/run.sh
 
-    echo "LEPTOS_OUTPUT_NAME=leptos-loodsenboekje LEPTOS_SITE_ROOT=site LEPTOS_SITE_ADDR="0.0.0.0:1744" ./loodsenboekje" >> app/run.sh
-    chmod +x app/run.sh
+    scp -r loodsenboekje/ server:./
+    rm -rf loodsenboekje/
 
-    scp -r app/ server:./
-    rm -rf app/
 
