@@ -10,6 +10,7 @@ cfg_if!{
     if #[cfg(feature = "ssr")] {
         use dotenvy::dotenv;
         use std::env;
+        use std::fs::File;
         use axum_session::{Session, SessionConfig, SessionStore, SessionNullPool, SessionLayer, SecurityMode, Key};
         use axum::{
             Router,
@@ -21,7 +22,7 @@ cfg_if!{
         };
         use leptos::*;
         use leptos_axum::{generate_route_list, LeptosRoutes, handle_server_fns_with_context};
-        use simplelog::{LevelFilter, ConfigBuilder, TermLogger, TerminalMode, ColorChoice};
+        use simplelog::*;
 
         use loodsenboekje::app::*;
 
@@ -82,15 +83,23 @@ cfg_if!{
                 .fallback_service(routes_static(&site_root))
                 .layer(SessionLayer::new(session_store))
                 ;
-            // TODO: change logger to file logger in production (on release build)
-            let _ = TermLogger::init(
-                LevelFilter::Info,
-                ConfigBuilder::new()
-                    .add_filter_allow("loodsenboekje".to_string())
-                    .build(),
-                TerminalMode::Mixed,
-                ColorChoice::Auto
-            );
+            let _ = CombinedLogger::init(vec![
+                TermLogger::new(
+                    LevelFilter::Debug,
+                    ConfigBuilder::new()
+                        .add_filter_allow("loodsenboekje".to_string())
+                        .build(),
+                    TerminalMode::Mixed,
+                    ColorChoice::Auto,
+                ),
+                WriteLogger::new(
+                    LevelFilter::Info,
+                    ConfigBuilder::new()
+                        .add_filter_allow("loodsenboekje".to_string())
+                        .build(),
+                    File::create("loodsenboekje.log").unwrap(),
+                ),
+            ]);
 
             axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
         }

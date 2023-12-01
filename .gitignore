@@ -1,5 +1,6 @@
 /target
 *.db*
 *.csv
+*.log
 
 app/

@@ -72,11 +72,11 @@ async fn logout() -> Result<(), ServerFnError> {
 pub async fn current_user() -> Result<Option<User>, ServerFnError> {
     match user() {
         Ok(user) => {
-            info!("current user: {user}");
+            debug!("current user: {user}");
             Ok(Some(user))
         },
         Err(_) => {
-            info!("not logged in");
+            debug!("not logged in");
             Ok(None)
         }
     }

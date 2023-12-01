@@ -24,7 +24,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
         let db = db().await;
 
         if !validate_who(&who) {
-            info!("who field is invalid: {who}");
+            debug!("who field is invalid: {who}");
             return Err(Error::InvalidInput.into())
         }
 
@@ -39,7 +39,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             let entry_user = match get_user_by_username(&maybe_username).await {
                 Ok(user) => user,
                 Err(_) => {
-                    info!("{maybe_username} is not a user");
+                    debug!("{maybe_username} is not a user");
                     let id = create_inactive_user(&mut transaction, &maybe_username).await?;
                     get_user_by_id_tx(&mut transaction, id).await?
                 },
