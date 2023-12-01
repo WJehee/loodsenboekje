@@ -14,7 +14,7 @@ cfg_if! {
         use axum_session::{Session, SessionNullPool};
         use leptos::use_context;
         use crate::errors::Error;
-        use log::{info, warn};
+        use log::{debug, info, warn};
 
         pub fn user() -> Result<User, ServerFnError> {
             let session = session()?;

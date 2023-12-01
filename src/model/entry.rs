@@ -18,7 +18,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
         },
     };
     use sqlx::FromRow;
-    use log::info;
+    use log::{debug, info};
 
     pub async fn create_entry(how: &str, who: &str) -> Result<i64, ServerFnError> {
         let db = db().await;
