@@ -55,7 +55,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     }
 
     pub async fn create_inactive_user(transaction: &mut Transaction<'_, Sqlite>, username: &str) -> Result<i64, ServerFnError> {
-        info!("creating inactive user: {username}");
+        debug!("creating inactive user: {username}");
         let empty_password = String::new();
         let id: i64 = sqlx::query!("INSERT INTO users (username, password, user_type) VALUES (?, ?, ?)", username, empty_password, UserType::Inactive as i64)
             .execute(transaction.as_mut())
@@ -118,7 +118,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
         p if p == write_password => UserType::Writer,
         p if p == admin_password => UserType::Admin,
         _ => {
-            info!("Invalid account creation password");
+            debug!("Invalid account creation password");
             return Err(Error::InvalidInput.into())
         },
     };
@@ -142,7 +142,7 @@ pub async fn create_user(username: String, password: String, creation_password: 
                 .await?;
             info!("User: {username}, with id: {} activated their account", user.id);
         } else {
-            info!("User {username} already exists!");
+            debug!("User {username} already exists!");
             return Err(Error::InvalidInput.into())
         }
     } else {
@@ -188,7 +188,7 @@ pub async fn get_all_users() -> Result<Vec<User>, ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::Inactive => {
-            info!("Inactive user {user} tried to access all users");
+            debug!("Inactive user {user} tried to access all users");
             Err(Error::NoPermission.into())
         },
         _ => {
@@ -217,7 +217,7 @@ pub async fn user_leaderboard() -> Result<Vec<UserAndCount>, ServerFnError> {
     let user = user()?;
     match user.user_type {
         UserType::Inactive => {
-            info!("Inactive user {user} tried to access leaderboard");
+            debug!("Inactive user {user} tried to access leaderboard");
             Err(Error::NoPermission.into())
         },
         _ => {
