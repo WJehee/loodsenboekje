@@ -8,7 +8,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
     use sqlx::{FromRow, Transaction, Sqlite};
     use crate::auth::user;
     use crate::errors::Error;
-    use log::info;
+    use log::{debug, info};
 
     #[derive(FromRow)]
     pub struct SqlUser {
