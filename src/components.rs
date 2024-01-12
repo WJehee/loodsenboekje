@@ -189,7 +189,7 @@ fn EntryRow(
             <td>
                 { move || user.get().map(|user| match user {
                     Ok(Some(user)) => match user.user_type {
-                        UserType::Writer | UserType::Admin => view! {
+                        UserType::Admin => view! {
                             <ActionForm action=delete_entry>
                                 <input type="hidden" name="id" value={entry.id}/>
                                 <button type="submit" name="submit" class="outline secondary">
@@ -197,7 +197,7 @@ fn EntryRow(
                                 </button>
                             </ActionForm>
                         },
-                        UserType::Reader | UserType::Inactive => ().into_view(),
+                        _ => ().into_view(),
                     },
                     _ => ().into_view()
                 })}

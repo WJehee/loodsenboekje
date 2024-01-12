@@ -108,11 +108,7 @@ pub async fn get_entries(query: String) -> Result<Vec<Entry>, ServerFnError> {
 pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
     let user = user()?;
     match user.user_type {
-        UserType::Reader | UserType::Inactive => {
-            info!("{user} does not have permission to delete entry {id}");
-            Err(Error::NoPermission.into())
-        }
-        UserType::Admin | UserType::Writer => {
+        UserType::Admin => {
             let db = db().await;
             sqlx::query!("DELETE FROM entries WHERE id = ?", id)
                 .execute(&db)
@@ -120,6 +116,10 @@ pub async fn delete_entry(id: i64) -> Result<(), ServerFnError> {
             info!("{user} deleted entry with id: {id}");
             Ok(())
         },
+        _ => {
+            info!("{user} does not have permission to delete entry {id}");
+            Err(Error::NoPermission.into())
+        }
     }
 }
 
