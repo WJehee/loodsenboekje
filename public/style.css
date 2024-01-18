@@ -1,0 +1,14 @@
+
+@media screen and (min-width: 0px) and (max-width: 768px) {
+    :root {
+        font-size: 10px;
+    }
+
+    .hidden-mobile {
+        display: none;
+    }
+
+    .icon {
+        transform:scale(0.6);
+    }
+}

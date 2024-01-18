@@ -34,6 +34,8 @@ pub fn App() -> impl IntoView {
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
         <link rel="manifest" href="/site.webmanifest"/>
+        <link rel="stylesheet" href="/style.css"/>
+
         <Title text="Loodsen Boekje"/>
         <div class="container">
             <nav>
@@ -47,7 +49,7 @@ pub fn App() -> impl IntoView {
                     Ok(Some(user)) => {
                         view! {
                         <ul>
-                            <li>Ingelogd als {user.name}</li>
+                            <li class="hidden-mobile">Ingelogd als {user.name}</li>
                         </ul>
                         <ul>
                             <li><a href="/leaderboard">Leaderboard</a></li>
@@ -61,7 +63,7 @@ pub fn App() -> impl IntoView {
                     _ => {
                         view! {
                         <ul>
-                            <li>Niet ingelogd</li>
+                            <li class="hidden-mobile">Niet ingelogd</li>
                         </ul>
                         <ul>
                             <li><a href="/login">Login</a></li>
