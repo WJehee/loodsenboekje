@@ -3,26 +3,39 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs }: let
+  outputs = { self, nixpkgs, rust-overlay }:
+  let
         system = "x86_64-linux";
-        pkgs = nixpkgs.legacyPackages.${system};
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs {
+            inherit system overlays;
+        };
+        rust-toolchain = pkgs.rust-bin.nightly.latest.default.override {
+            extensions = [ "rust-src" ];
+            targets = [ "wasm32-unknown-unknown" ];
+        };
   in {
-        devShells.${system}.default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-                pkg-config
-                openssl
-                binaryen
+        devShells.${system}.default = with pkgs; mkShell {
+            buildInputs = [
+                rust-toolchain
+                cargo-watch
+                # rust-analyzer
+                # rustfmt
+                # clippy
 
-                rustup
-                cargo
-                cargo generate
-                cargo watch
                 cargo-leptos
                 sqlx-cli
+
+                openssl
+                binaryen
             ];
-            LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [ openssl ];
+            # RUST_SRC_PATH = rustPlatform.rustLibSrc;
+            # RUST_BACKTRACE = 1;
+
+            LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
             shellHook = ''
                 export DATABASE_URL="sqlite://sqlite.db"
             '';
