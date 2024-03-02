@@ -22,9 +22,9 @@
             buildInputs = [
                 rust-toolchain
                 cargo-watch
-                # rust-analyzer
-                # rustfmt
-                # clippy
+                rust-analyzer
+                rustfmt
+                clippy
 
                 cargo-leptos
                 sqlx-cli
@@ -32,9 +32,6 @@
                 openssl
                 binaryen
             ];
-            # RUST_SRC_PATH = rustPlatform.rustLibSrc;
-            # RUST_BACKTRACE = 1;
-
             LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
             shellHook = ''
                 export DATABASE_URL="sqlite://sqlite.db"
