@@ -1,13 +1,13 @@
 {
-  description = "Loodsenboekje";
+    description = "Loodsenboekje";
 
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
-  };
+    inputs = {
+        nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+        rust-overlay.url = "github:oxalica/rust-overlay";
+    };
 
-  outputs = { self, nixpkgs, rust-overlay }:
-  let
+    outputs = { self, nixpkgs, rust-overlay }:
+    let
         system = "x86_64-linux";
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
@@ -17,7 +17,7 @@
             extensions = [ "rust-src" ];
             targets = [ "wasm32-unknown-unknown" ];
         };
-  in {
+    in {
         devShells.${system}.default = with pkgs; mkShell {
             buildInputs = [
                 rust-toolchain
@@ -37,5 +37,5 @@
                 export DATABASE_URL="sqlite://sqlite.db"
             '';
         };
-  };
+    };
 }
