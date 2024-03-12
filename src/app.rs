@@ -204,7 +204,7 @@ fn LeaderBoard() -> impl IntoView {
                 Err(e) => {
                     let e = match e {
                         ServerFnError::ServerError(e) => e.to_string(),
-                        _ => "Server error".to_string(),
+                        _ => "Error loading leaderboard".to_string(),
                     };
                     view! {<span>{e.to_string()}</span>}.into_view()
                 },

@@ -134,7 +134,7 @@ fn AllEntries(
                 Err(e) => {
                     let e = match e {
                         ServerFnError::ServerError(e) => e.to_string(),
-                        _ => "Server error".to_string(),
+                        _ => "Error loading entries".to_string(),
                     };
                     view! {
                         <span>{e}</span>
