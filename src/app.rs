@@ -223,7 +223,7 @@ fn LeaderBoard() -> impl IntoView {
                             let:user
                         >
                             <tr>
-                                <td>{user.name}</td>
+                                <td><a href=format!("/?search={0}", user.name)>{user.name}</a></td>
                                 <td>{user.count}</td>
                             </tr>
                         </For>
