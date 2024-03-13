@@ -39,7 +39,8 @@
             ];
         };
 
-        EXPORT_DATABASE_URL = "export DATABASE_URL='sqlite://sqlite.db'";
+        LOODSENBOEKJE_DATA_DIR = "/var/lib/${name}";
+        DATABASE_URL = "sqlite.db";
 
         loodsenboekje = craneLib.buildPackage (args // {
             pname = name;
@@ -52,43 +53,46 @@
             cargoArtifacts = craneLib.buildDepsOnly args;
 
             preBuild = ''
-                ${EXPORT_DATABASE_URL}
+                export DATABASE_URL='sqlite://${DATABASE_URL}'
                 sqlx database create
                 sqlx migrate run
             '';
             buildPhaseCargoCommand = "cargo leptos build --release -vvv";
             installPhaseCommand = ''
-                mkdir -p $out/bin
-                cp target/release/${name} $out/bin/
-                cp -r target/site $out/bin/
-                wrapProgram $out/bin/${name} \
-                --set LEPTOS_SITE_ROOT $out/bin/site
-
-                touch .env
-                p1=$(openssl rand -base64 32)
-                p2=$(openssl rand -base64 32)
-                p3=$(openssl rand -base64 32)
-                echo "READ_PASSWORD=$p1" >> .env
-                echo "WRITE_PASSWORD=$p2" >> .env
-                echo "ADMIN_PASSWORD=$p3" >> .env
-                cp .env $out/bin/
+                mkdir -p $out/
+                cp target/release/${name} $out/
+                cp -r target/site $out/
+                wrapProgram $out/${name} \
+                --set LEPTOS_SITE_ROOT $out/site \
+                --set READ_PASSWORD $(openssl rand -base64 32) \
+                --set WRITE_PASSWORD $(openssl rand -base64 32) \
+                --set ADMIN_PASSWORD $(openssl rand -base64 32) \
+                --set DATA_DIR ${LOODSENBOEKJE_DATA_DIR}
             '';
         });
     in {
-        devShells.${system}.default = with pkgs; mkShell (args // {
-            # Dev tools
+        devShells.${system}.default = with pkgs; mkShell {
             buildInputs = [
+                rust-toolchain
+                cargo
                 cargo-watch
+
                 rust-analyzer
                 rustfmt
                 clippy
+
+                cargo-leptos
                 sqlx-cli
+
+                openssl
+                binaryen
             ];
             LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
             shellHook = ''
-                ${EXPORT_DATABASE_URL}
+                export DATA_DIR='./.'
+                export DATABASE_URL='sqlite://${DATABASE_URL}'
             '';
-        });
+        };
         packages.${system}.default = loodsenboekje;
     };
 }
