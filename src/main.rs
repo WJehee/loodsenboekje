@@ -57,10 +57,12 @@ cfg_if!{
 
         #[tokio::main]
         async fn main() {
-            dotenv().expect("Expected .env file to be present");
+            // Use dotenv if available
+            let _ = dotenv();
             env::var("READ_PASSWORD").expect("Expected READ_PASSWORD to be set");
             env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
             env::var("ADMIN_PASSWORD").expect("Expected ADMIN_PASSWORD to be set");
+            let data_dir = env::var("DATA_DIR").expect("Expected DATA_DIR to be set");
 
             let session_config = SessionConfig::default()
                 .with_table_name("sessions")
@@ -97,7 +99,7 @@ cfg_if!{
                     ConfigBuilder::new()
                         .add_filter_allow("loodsenboekje".to_string())
                         .build(),
-                    File::create("loodsenboekje.log").unwrap(),
+                    File::create(&format!("{data_dir}/loodsenboekje.log")).unwrap(),
                 ),
             ]);
 
