@@ -1,6 +1,6 @@
 flake: { config, system, lib }:
 let
-    inherit (lib) mkEnableOption mkOption mdDoc types;
+    inherit (lib) types mkEnableOption mkOption mdDoc;
     inherit (flake.packages.${system}) loodsenboekje;
 
     cfg = config.services.loodsenboekje;
@@ -20,7 +20,7 @@ in {
             description = mdDoc "The package to use";
         };
     };
-    config = {
+    config = lib.mkIf cfg.enable {
         users = {
             users.loodsenboekje = {
                 description = "Loodsenboekje daemon";
