@@ -20,11 +20,20 @@ in {
         };
     };
     config = lib.mkIf cfg.enable {
+        users = {
+            users.loodsenboekje = {
+                description = "Loodsenboekje daemon";
+                isSystemUser = true;
+                group = "loodsenboekje";
+            };
+            groups.loodsenboekje = {};
+        };
         systemd.services.loodsenboekje = {
             wantedBy = [ "multi-user.target" ];
             serviceConfig = {
                 Type = "simple";
-                DynamicUser = "yes";
+                User = "loodsenboekje";
+                Group = "loodsenboekje";
 
                 Restart = "always";
                 ExecStart = "DATA_DIR=${cfg.dataDir} ${lib.getBin cfg.package}/bin/loodsenboekje";
