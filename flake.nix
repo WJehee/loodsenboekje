@@ -50,6 +50,7 @@
             rust-toolchain = rust-toolchain;
             craneLib = craneLib;
         };
+        inherit system;
         nixosModules.loodsenboekje = import ./nix/module.nix self;
     };
 }

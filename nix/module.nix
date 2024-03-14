@@ -1,14 +1,13 @@
-flake: { config, system, lib }:
+flake: { config, pkgs, lib, ... }:
 let
     inherit (lib) types mkEnableOption mkOption mdDoc;
-    inherit (flake.packages.${system}) loodsenboekje;
+
+    package = flake.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     cfg = config.services.loodsenboekje;
 in {
-    options = {
-        services.loodsenboekje = {
-            enable = mkEnableOption "Loodsenboekje";
-        };
+    options.services.loodsenboekje = {
+        enable = mkEnableOption "Loodsenboekje";
         dataDir = mkOption {
             type = types.str;
             default = "/var/lib/loodsenboekje";
@@ -16,24 +15,16 @@ in {
         };
         package = mkOption {
             type = types.package;
-            default = loodsenboekje;
+            default = package;
             description = mdDoc "The package to use";
         };
     };
     config = lib.mkIf cfg.enable {
-        users = {
-            users.loodsenboekje = {
-                description = "Loodsenboekje daemon";
-                isSystemUser = true;
-                group = "loodsenboekje";
-            };
-            groups.loodsenboekje = {};
-        };
         systemd.services.loodsenboekje = {
+            wantedBy = [ "multi-user.target" ];
             serviceConfig = {
                 Type = "simple";
-                User = "loodsenboekje";
-                Group = "loodsenboekje";
+                DynamicUser = "yes";
 
                 Restart = "always";
                 ExecStart = "DATA_DIR=${cfg.dataDir} ${lib.getBin cfg.package}/bin/loodsenboekje";
