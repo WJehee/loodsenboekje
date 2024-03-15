@@ -4,11 +4,11 @@ let
     inherit (cargoToml.package) name version;
 
     args = {
-        # src = craneLib.cleanCargoSource (craneLib.path ./.);
         src = lib.cleanSourceWith {
             src = craneLib.path ../.;
             filter = path: type:
             (lib.hasSuffix ".sql" path) ||
+            (lib.hasInfix "/public/" path) ||
             (craneLib.filterCargoSources path type)
             ;
         };
@@ -40,7 +40,7 @@ craneLib.buildPackage (args // {
     installPhaseCommand = ''
         mkdir -p $out/bin/
         cp target/release/${name} $out/bin/
-        cp -r target/site $out/bin/
+        cp -r target/site/ $out/bin/site
         wrapProgram $out/bin/${name} \
         --set LEPTOS_SITE_ROOT $out/bin/site \
         --set LEPTOS_SITE_ADDR 0.0.0.0:1744 \
