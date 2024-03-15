@@ -42,6 +42,7 @@ craneLib.buildPackage (args // {
         cp target/release/${name} $out/bin/
         cp -r target/site/ $out/bin/site
         wrapProgram $out/bin/${name} \
+        --set LEPTOS_OUTPUT_NAME leptos-loodsenboekje \
         --set LEPTOS_SITE_ROOT $out/bin/site \
         --set LEPTOS_SITE_ADDR 0.0.0.0:1744 \
         --set READ_PASSWORD $(openssl rand -base64 32) \
