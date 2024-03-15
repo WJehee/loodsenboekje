@@ -30,13 +30,16 @@ in {
         };
         systemd.services.loodsenboekje = {
             wantedBy = [ "multi-user.target" ];
+            after = [ "network.target" ];
+            description = "Loodsenboekje server";
+            environment.DATA_DIR = "${cfg.dataDir}";
             serviceConfig = {
                 Type = "simple";
                 User = "loodsenboekje";
                 Group = "loodsenboekje";
 
                 Restart = "always";
-                ExecStart = "DATA_DIR=${cfg.dataDir} ${lib.getBin cfg.package}/bin/loodsenboekje";
+                ExecStart = "${lib.getBin cfg.package}/bin/loodsenboekje";
                 StateDirectory = "loodsenboekje";
             };
         };
