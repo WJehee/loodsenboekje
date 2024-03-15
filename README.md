@@ -4,14 +4,6 @@ Website to keep track of the ways a beer has been opened.
 
 Favicon generated with: https://favicon.io/emoji-favicons/
 
-# Preparing to run
-
-Create a .env file with the following values:
-
-- READ_PASSWORD
-- WRITE_PASSWORD
-- ADMIN_PASSWORD
-
 # Adding a migration
 ```
 cargo sqlx migrate add <name>
@@ -19,26 +11,38 @@ cargo sqlx migrate add <name>
 
 # Deploying
 
-Run:
-```
-just deploy
-```
-Login in to the server, `cd` into `loodsenboekje/`
+Loodsenboekje exports a NixOS module that can be used to deploy it.
+Add the flake to your flake inputs and use this line to enable the server:
 
-Run:
 ```
-patchelf --print-interpreter /run/current-system/sw/bin/ls
+services.loodsenboekje.enable = true;
 ```
 
-Copy the output and paste it in the following command:
-```
-patchelf --set-interpreter OUTPUT loodsenboekje
+By default, the database and logs are stored in `/var/lib/loodsenboekje`.  
+In order for the program to run, a database must be created at that location (using `sqlx`),
+or you can copy and existing database (with the correct schema).
+
+## Copying binary from faster machine
+
+If you are running this on a server with little resources (like me) it might be faster to
+build the binary locally and then copy it to the server instead of building it on the server.
+
+By default, NixOS trusts to root user to copy store paths.
+If you do not access your server with root (as you should), add the following to your server configuration:
+```nix
+# Use mkOptionDefault to keep the defaults, thus only adding the new user
+nix.settings.trusted-users = lib.mkOptionDefault [
+    YOUR_USERNAME
+];
 ```
 
-Set the environment variables
+Finding the store path:
 
-Run the server in the background:
+- Build the binary using `nix build` then run `nix path-info` to get the path
+- The path is also shown when using `systemctl status loodsenboekje` if you install it as a service
+
+Copy the path to the remote server
 ```
-./run.sh &
+nix-copy-closure --to user@remote /nix/store/PATH_TO_PACKAGE
 ```
 

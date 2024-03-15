@@ -1,12 +1,17 @@
-{ pkgs, rust-toolchain, craneLib }:
+{ lib, pkgs, rust-toolchain, craneLib }:
 let
     cargoToml = builtins.fromTOML (builtins.readFile ../Cargo.toml);
     inherit (cargoToml.package) name version;
 
     args = {
-        # TODO: make this work, currently only takes .rs files, but we also need migrations, etc.
         # src = craneLib.cleanCargoSource (craneLib.path ./.);
-        src = craneLib.path ../.;
+        src = lib.cleanSourceWith {
+            src = craneLib.path ../.;
+            filter = path: type:
+            (lib.hasSuffix ".sql" path) ||
+            (craneLib.filterCargoSources path type)
+            ;
+        };
         pname = name;
         version = version;
         buildInputs = with pkgs; [
