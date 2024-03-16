@@ -70,9 +70,9 @@ cfg_if!{
                 .with_database_key(Key::generate())
                 .with_security_mode(SecurityMode::PerSession);
 
-            let session_store = SessionStore::<SessionNullPool>::new(None, session_config).await.unwrap();
+            let session_store = SessionStore::<SessionNullPool>::new(None, session_config).await.expect("Failed to get session store");
 
-            let conf = get_configuration(None).await.unwrap();
+            let conf = get_configuration(None).await.expect("Failed to get configuration");
             let leptos_options = conf.leptos_options;
             let addr = leptos_options.site_addr;
             let site_root = leptos_options.site_root.clone();
@@ -99,11 +99,11 @@ cfg_if!{
                     ConfigBuilder::new()
                         .add_filter_allow("loodsenboekje".to_string())
                         .build(),
-                    File::create(&format!("{data_dir}/loodsenboekje.log")).unwrap(),
+                    File::create(&format!("{data_dir}/loodsenboekje.log")).expect("Failed to open log file"),
                 ),
             ]);
 
-            axum::Server::bind(&addr).serve(router.into_make_service()).await.unwrap();
+            axum::Server::bind(&addr).serve(router.into_make_service()).await.expect("Failed to start server");
         }
     } else {
         fn main() {}
