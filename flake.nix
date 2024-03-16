@@ -17,7 +17,7 @@
         pkgs = import nixpkgs {
             inherit system overlays;
         };
-        rust-toolchain = pkgs.rust-bin.nightly.latest.default.override {
+        rust-toolchain = pkgs.rust-bin.nightly."2024-02-14".default.override {
             extensions = [ "rust-src" ];
             targets = [ "wasm32-unknown-unknown" ];
         };
