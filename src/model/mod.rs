@@ -1,15 +1,21 @@
-use cfg_if::cfg_if;
-
 pub mod user;
 pub mod entry;
 
-cfg_if! { if #[cfg(feature = "ssr")] {
-    use std::env;
-    use sqlx::SqlitePool;
+#[cfg(feature="ssr")]
+use leptos::ServerFnError;
+#[cfg(feature="ssr")]
+use sqlx::SqlitePool;
 
-    pub async fn db() -> SqlitePool {
-        let data_dir = env::var("DATA_DIR").expect("DATA_DIR to be set");
-        SqlitePool::connect(&format!("{data_dir}/sqlite.db")).await.expect("Failed to connect to database")
-    }
-}}
+#[cfg(feature="ssr")]
+pub async fn db() -> Result<SqlitePool, ServerFnError> {
+    use leptos::use_context;
+    use log::warn;
+    
+    use crate::errors::Error;
 
+    use_context::<SqlitePool>()
+        .ok_or_else(|| {
+            warn!("Failed to get database pool");
+            Error::Database.into()
+        })
+}

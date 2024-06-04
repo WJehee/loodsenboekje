@@ -27,7 +27,7 @@ or you can copy and existing database (with the correct schema).
 If you are running this on a server with little resources (like me) it might be faster to
 build the binary locally and then copy it to the server instead of building it on the server.
 
-By default, NixOS trusts to root user to copy store paths.
+By default, NixOS trusts the root user to copy store paths.
 If you do not access your server with root (as you should), add the following to your server configuration:
 ```nix
 # Use mkOptionDefault to keep the defaults, thus only adding the new user

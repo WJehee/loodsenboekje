@@ -17,7 +17,7 @@
         pkgs = import nixpkgs {
             inherit system overlays;
         };
-        rust-toolchain = pkgs.rust-bin.nightly."2024-02-14".default.override {
+        rust-toolchain = pkgs.rust-bin.nightly."2024-06-03".default.override {
             extensions = [ "rust-src" ];
             targets = [ "wasm32-unknown-unknown" ];
         };
@@ -27,16 +27,14 @@
             # TODO: make this combine with universal required build inputs
             buildInputs = [
                 rust-toolchain
+
                 cargo
                 cargo-watch
-
                 rust-analyzer
                 rustfmt
                 clippy
-
                 cargo-leptos
                 sqlx-cli
-
                 openssl
                 binaryen
             ];
