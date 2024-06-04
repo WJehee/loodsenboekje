@@ -2,17 +2,8 @@
 _default:
     just --list
 
-# Leptos watch
-watch:
-    cargo leptos watch
-
-# Initialize project
-init: setup-env
-    cargo sqlx db create
-    cargo sqlx migrate run
-
 # Setup environment variables in .env for local development
-setup-env:
+_setup-env:
     #!/usr/bin/env bash
     rm .env
     touch .env
@@ -22,6 +13,15 @@ setup-env:
     echo "READ_PASSWORD=$p1" >> .env
     echo "WRITE_PASSWORD=$p2" >> .env
     echo "ADMIN_PASSWORD=$p3" >> .env
+
+# Leptos watch
+watch:
+    cargo leptos watch
+
+# Initialize project
+init: _setup-env
+    cargo sqlx db create
+    cargo sqlx migrate run
 
 # Build for release
 build:
