@@ -1,4 +1,3 @@
-
 _default:
     just --list
 
@@ -30,4 +29,7 @@ build:
 # Load data
 load:
     cargo run --bin load_data --features="ssr"
+
+copy target:
+    nix copy --to ssh://{{target}} $(nix path-info)
 

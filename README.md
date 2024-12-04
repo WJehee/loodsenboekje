@@ -30,11 +30,12 @@ build the binary locally and then copy it to the server instead of building it o
 By default, NixOS trusts the root user to copy store paths.
 If you do not access your server with root (as you should), add the following to your server configuration:
 ```nix
-# Use mkOptionDefault to keep the defaults, thus only adding the new user
-nix.settings.trusted-users = lib.mkOptionDefault [
+nix.settings.trusted-users = [
     YOUR_USERNAME
 ];
 ```
+
+Copying can be done with the just recipe: `just copy TARGET` or by following the steps below
 
 Finding the store path:
 
@@ -43,6 +44,6 @@ Finding the store path:
 
 Copy the path to the remote server
 ```
-nix-copy-closure --to user@remote /nix/store/PATH_TO_PACKAGE
+nix copy --to ssh://user@remote /nix/store/PATH_TO_PACKAGE
 ```
 
