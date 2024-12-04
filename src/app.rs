@@ -90,7 +90,7 @@ pub fn App() -> impl IntoView {
         </div>
         <footer class="container">
             <hr/>
-            View the <a href="https://github.com/WJehee/loodsenboekje.com" target="_blank">Source code</a>
+            View the <a href="https://github.com/WJehee/loodsenboekje" target="_blank">Source code</a>
         </footer>
     }
 }

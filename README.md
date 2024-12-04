@@ -1,4 +1,4 @@
-# Loodsenboekje.com
+# Loodsen Boekje
 
 Website to keep track of the ways a beer has been opened.
 
