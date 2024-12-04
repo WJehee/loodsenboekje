@@ -4,6 +4,11 @@ Website to keep track of the ways a beer has been opened.
 
 Favicon generated with: https://favicon.io/emoji-favicons/
 
+# Note to self
+
+When updating, the registration passwords change as they are randomly generated on build.
+They can be found in the shell script in the nix store path.
+
 # Adding a migration
 ```
 cargo sqlx migrate add <name>
