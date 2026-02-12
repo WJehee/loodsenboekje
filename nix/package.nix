@@ -17,6 +17,7 @@ let
         buildInputs = with pkgs; [
             rust-toolchain
             cargo-leptos
+            wasm-bindgen-cli
             binaryen
             openssl
         ];
@@ -29,6 +30,7 @@ craneLib.buildPackage (args // {
         sqlx-cli
     ];
     doCheck = false;
+    doNotPostBuildInstallCargoBinaries = true;
     cargoArtifacts = craneLib.buildDepsOnly args;
 
     preBuild = ''
