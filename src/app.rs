@@ -8,7 +8,7 @@ use crate::{
         entry::AddEntry,
         user::{Register, validate_username, validate_password, UserType, User, user_leaderboard}
     },
-    auth::{Login, Logout, current_user}
+    auth::{Login, Logout, AuthMode, current_user, get_auth_mode}
 };
 
 #[component]
@@ -25,6 +25,7 @@ pub fn App() -> impl IntoView {
         )},
         move |_| current_user(),
     );
+    let auth_mode = create_resource(|| (), |_| async move { get_auth_mode().await });
     provide_context(user);
     provide_meta_context();
 
@@ -45,32 +46,46 @@ pub fn App() -> impl IntoView {
                 <Transition
                     fallback=move || view!{<span>Loading...</span>}
                 >
-                { move || user.get().map(|user| match user {
+                { move || {
+                    let mode = auth_mode.get().and_then(|r| r.ok()).unwrap_or(AuthMode::Local);
+                    user.get().map(|user| match user {
                     Ok(Some(user)) => {
+                        let logout_item = match mode {
+                            AuthMode::Authelia => ().into_view(),
+                            AuthMode::Local => view! {
+                                <li>
+                                    <ActionForm action=logout>
+                                        <input type="submit" value="Log uit"/>
+                                    </ActionForm>
+                                </li>
+                            }.into_view(),
+                        };
                         view! {
                         <ul>
                             <li class="hidden-mobile">Ingelogd als {user.name}</li>
                         </ul>
                         <ul>
                             <li><a href="/leaderboard">Leaderboard</a></li>
-                            <li>
-                                <ActionForm action=logout>
-                                    <input type="submit" value="Log uit"/>
-                                </ActionForm>
-                            </li>
+                            {logout_item}
                         </ul>
                     }}.into_view(),
-                    _ => {
-                        view! {
-                        <ul>
-                            <li class="hidden-mobile">Niet ingelogd</li>
-                        </ul>
-                        <ul>
-                            <li><a href="/login">Login</a></li>
-                            <li><a href="/register">Nieuw account</a></li>
-                        </ul>
-                    }}.into_view()
-                })}
+                    _ => match mode {
+                        AuthMode::Authelia => view! {
+                            <ul>
+                                <li class="hidden-mobile">Niet geauthenticeerd</li>
+                            </ul>
+                        }.into_view(),
+                        AuthMode::Local => view! {
+                            <ul>
+                                <li class="hidden-mobile">Niet ingelogd</li>
+                            </ul>
+                            <ul>
+                                <li><a href="/login">Login</a></li>
+                                <li><a href="/register">Nieuw account</a></li>
+                            </ul>
+                        }.into_view(),
+                    }
+                })}}
             </Transition>
             </nav>
             <main>
