@@ -19,6 +19,7 @@ use leptos_router::RouteListing;
 use simplelog::*;
 
 use loodsenboekje::app::*;
+use loodsenboekje::auth::{AuthMode, authelia::AutheliaHeaders};
 use sqlx::SqlitePool;
 
 #[derive(FromRef, Debug, Clone)]
@@ -26,6 +27,7 @@ pub struct AppState {
     pub leptos_options: LeptosOptions,
     pub routes: Vec<RouteListing>,
     pub pool: SqlitePool,
+    pub auth_mode: AuthMode,
 }
 
 async fn server_fn_handler(
@@ -33,9 +35,13 @@ async fn server_fn_handler(
     session: Session,
     request: Request<AxumBody>,
 ) -> impl IntoResponse {
+    let authelia = AutheliaHeaders::from_headers(request.headers());
+    let auth_mode = app_state.auth_mode;
     handle_server_fns_with_context(move || {
         provide_context(app_state.pool.clone());
         provide_context(session.clone());
+        provide_context(auth_mode);
+        provide_context(authelia.clone());
     }, request).await
 }
 
@@ -45,12 +51,16 @@ async fn leptos_routes_handler(
     session: Session,
     req: Request<AxumBody>
 ) -> Response {
+    let authelia = AutheliaHeaders::from_headers(req.headers());
+    let auth_mode = app_state.auth_mode;
     let handler = leptos_axum::render_route_with_context(
         app_state.leptos_options.clone(),
         app_state.routes.clone(),
         move || {
             provide_context(app_state.pool.clone());
             provide_context(session.clone());
+            provide_context(auth_mode);
+            provide_context(authelia.clone());
         },
         App,
     );
@@ -66,9 +76,12 @@ fn routes_static(root: &str) -> axum::Router {
 #[tokio::main]
 async fn main() {
     let _ = dotenv();
-    env::var("READ_PASSWORD").expect("Expected READ_PASSWORD to be set");
-    env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
-    env::var("ADMIN_PASSWORD").expect("Expected ADMIN_PASSWORD to be set");
+    let auth_mode = AuthMode::from_env();
+    if auth_mode == AuthMode::Local {
+        env::var("READ_PASSWORD").expect("Expected READ_PASSWORD to be set");
+        env::var("WRITE_PASSWORD").expect("Expected WRITE_PASSWORD to be set");
+        env::var("ADMIN_PASSWORD").expect("Expected ADMIN_PASSWORD to be set");
+    }
     let data_dir = env::var("DATA_DIR").expect("Expected DATA_DIR to be set");
 
     let db_pool = SqlitePool::connect(&format!("{data_dir}/sqlite.db")).await.expect("Failed to connect to database");
@@ -88,6 +101,7 @@ async fn main() {
         leptos_options,
         routes: routes.clone(),
         pool: db_pool,
+        auth_mode,
     };
 
     let router = Router::new()
